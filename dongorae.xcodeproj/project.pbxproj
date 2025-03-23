@@ -1,0 +1,580 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		23E792AE2D8FD24E00C1DD15 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 23E7928E2D8FD24C00C1DD15 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 23E792952D8FD24C00C1DD15;
+			remoteInfo = dongorae;
+		};
+		23E792B82D8FD24E00C1DD15 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 23E7928E2D8FD24C00C1DD15 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 23E792952D8FD24C00C1DD15;
+			remoteInfo = dongorae;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		23E792962D8FD24C00C1DD15 /* dongorae.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = dongorae.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		23E792AD2D8FD24E00C1DD15 /* dongoraeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = dongoraeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		23E792B72D8FD24E00C1DD15 /* dongoraeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = dongoraeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		23E792BF2D8FD24E00C1DD15 /* Exceptions for "dongorae" folder in "dongorae" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 23E792952D8FD24C00C1DD15 /* dongorae */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		23E792982D8FD24C00C1DD15 /* dongorae */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				23E792BF2D8FD24E00C1DD15 /* Exceptions for "dongorae" folder in "dongorae" target */,
+			);
+			path = dongorae;
+			sourceTree = "<group>";
+		};
+		23E792B02D8FD24E00C1DD15 /* dongoraeTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = dongoraeTests;
+			sourceTree = "<group>";
+		};
+		23E792BA2D8FD24E00C1DD15 /* dongoraeUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = dongoraeUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		23E792932D8FD24C00C1DD15 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		23E792AA2D8FD24E00C1DD15 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		23E792B42D8FD24E00C1DD15 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		23E7928D2D8FD24C00C1DD15 = {
+			isa = PBXGroup;
+			children = (
+				23E792982D8FD24C00C1DD15 /* dongorae */,
+				23E792B02D8FD24E00C1DD15 /* dongoraeTests */,
+				23E792BA2D8FD24E00C1DD15 /* dongoraeUITests */,
+				23E792972D8FD24C00C1DD15 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		23E792972D8FD24C00C1DD15 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				23E792962D8FD24C00C1DD15 /* dongorae.app */,
+				23E792AD2D8FD24E00C1DD15 /* dongoraeTests.xctest */,
+				23E792B72D8FD24E00C1DD15 /* dongoraeUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		23E792952D8FD24C00C1DD15 /* dongorae */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 23E792C02D8FD24E00C1DD15 /* Build configuration list for PBXNativeTarget "dongorae" */;
+			buildPhases = (
+				23E792922D8FD24C00C1DD15 /* Sources */,
+				23E792932D8FD24C00C1DD15 /* Frameworks */,
+				23E792942D8FD24C00C1DD15 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				23E792982D8FD24C00C1DD15 /* dongorae */,
+			);
+			name = dongorae;
+			packageProductDependencies = (
+			);
+			productName = dongorae;
+			productReference = 23E792962D8FD24C00C1DD15 /* dongorae.app */;
+			productType = "com.apple.product-type.application";
+		};
+		23E792AC2D8FD24E00C1DD15 /* dongoraeTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 23E792C52D8FD24E00C1DD15 /* Build configuration list for PBXNativeTarget "dongoraeTests" */;
+			buildPhases = (
+				23E792A92D8FD24E00C1DD15 /* Sources */,
+				23E792AA2D8FD24E00C1DD15 /* Frameworks */,
+				23E792AB2D8FD24E00C1DD15 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				23E792AF2D8FD24E00C1DD15 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				23E792B02D8FD24E00C1DD15 /* dongoraeTests */,
+			);
+			name = dongoraeTests;
+			packageProductDependencies = (
+			);
+			productName = dongoraeTests;
+			productReference = 23E792AD2D8FD24E00C1DD15 /* dongoraeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		23E792B62D8FD24E00C1DD15 /* dongoraeUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 23E792C82D8FD24E00C1DD15 /* Build configuration list for PBXNativeTarget "dongoraeUITests" */;
+			buildPhases = (
+				23E792B32D8FD24E00C1DD15 /* Sources */,
+				23E792B42D8FD24E00C1DD15 /* Frameworks */,
+				23E792B52D8FD24E00C1DD15 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				23E792B92D8FD24E00C1DD15 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				23E792BA2D8FD24E00C1DD15 /* dongoraeUITests */,
+			);
+			name = dongoraeUITests;
+			packageProductDependencies = (
+			);
+			productName = dongoraeUITests;
+			productReference = 23E792B72D8FD24E00C1DD15 /* dongoraeUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		23E7928E2D8FD24C00C1DD15 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1620;
+				LastUpgradeCheck = 1620;
+				TargetAttributes = {
+					23E792952D8FD24C00C1DD15 = {
+						CreatedOnToolsVersion = 16.2;
+					};
+					23E792AC2D8FD24E00C1DD15 = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 23E792952D8FD24C00C1DD15;
+					};
+					23E792B62D8FD24E00C1DD15 = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 23E792952D8FD24C00C1DD15;
+					};
+				};
+			};
+			buildConfigurationList = 23E792912D8FD24C00C1DD15 /* Build configuration list for PBXProject "dongorae" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 23E7928D2D8FD24C00C1DD15;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 23E792972D8FD24C00C1DD15 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				23E792952D8FD24C00C1DD15 /* dongorae */,
+				23E792AC2D8FD24E00C1DD15 /* dongoraeTests */,
+				23E792B62D8FD24E00C1DD15 /* dongoraeUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		23E792942D8FD24C00C1DD15 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		23E792AB2D8FD24E00C1DD15 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		23E792B52D8FD24E00C1DD15 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		23E792922D8FD24C00C1DD15 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		23E792A92D8FD24E00C1DD15 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		23E792B32D8FD24E00C1DD15 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		23E792AF2D8FD24E00C1DD15 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 23E792952D8FD24C00C1DD15 /* dongorae */;
+			targetProxy = 23E792AE2D8FD24E00C1DD15 /* PBXContainerItemProxy */;
+		};
+		23E792B92D8FD24E00C1DD15 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 23E792952D8FD24C00C1DD15 /* dongorae */;
+			targetProxy = 23E792B82D8FD24E00C1DD15 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		23E792C12D8FD24E00C1DD15 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = dongorae/dongorae.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"dongorae/Preview Content\"";
+				DEVELOPMENT_TEAM = 4SRDY8C934;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = dongorae/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = mygorae.dongorae;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		23E792C22D8FD24E00C1DD15 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = dongorae/dongorae.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"dongorae/Preview Content\"";
+				DEVELOPMENT_TEAM = 4SRDY8C934;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = dongorae/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = mygorae.dongorae;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		23E792C32D8FD24E00C1DD15 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		23E792C42D8FD24E00C1DD15 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		23E792C62D8FD24E00C1DD15 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4SRDY8C934;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = mygorae.dongoraeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/dongorae.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/dongorae";
+			};
+			name = Debug;
+		};
+		23E792C72D8FD24E00C1DD15 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4SRDY8C934;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = mygorae.dongoraeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/dongorae.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/dongorae";
+			};
+			name = Release;
+		};
+		23E792C92D8FD24E00C1DD15 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4SRDY8C934;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = mygorae.dongoraeUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = dongorae;
+			};
+			name = Debug;
+		};
+		23E792CA2D8FD24E00C1DD15 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4SRDY8C934;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = mygorae.dongoraeUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = dongorae;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		23E792912D8FD24C00C1DD15 /* Build configuration list for PBXProject "dongorae" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				23E792C32D8FD24E00C1DD15 /* Debug */,
+				23E792C42D8FD24E00C1DD15 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		23E792C02D8FD24E00C1DD15 /* Build configuration list for PBXNativeTarget "dongorae" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				23E792C12D8FD24E00C1DD15 /* Debug */,
+				23E792C22D8FD24E00C1DD15 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		23E792C52D8FD24E00C1DD15 /* Build configuration list for PBXNativeTarget "dongoraeTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				23E792C62D8FD24E00C1DD15 /* Debug */,
+				23E792C72D8FD24E00C1DD15 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		23E792C82D8FD24E00C1DD15 /* Build configuration list for PBXNativeTarget "dongoraeUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				23E792C92D8FD24E00C1DD15 /* Debug */,
+				23E792CA2D8FD24E00C1DD15 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 23E7928E2D8FD24C00C1DD15 /* Project object */;
+}
