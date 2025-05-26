@@ -1,9 +1,37 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="1" systemVersion="11A491" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="true" userDefinedModelVersionIdentifier="">
-    <entity name="Item" representedClassName="Item" syncable="YES" codeGenerationType="class">
-        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23605" systemVersion="24F74" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="YES" userDefinedModelVersionIdentifier="">
+    <entity name="Asset" representedClassName="Asset" isAbstract="YES" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="initialAmount" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <relationship name="tags" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TagAsset" inverseName="asset" inverseEntity="TagAsset"/>
+        <relationship name="transactions" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Transaction" inverseName="asset" inverseEntity="Transaction"/>
     </entity>
-    <elements>
-        <element name="Item" positionX="-63" positionY="-18" width="128" height="44"/>
-    </elements>
+    <entity name="AssetAccount" representedClassName="AssetAccount" parentEntity="Asset" syncable="YES" codeGenerationType="class">
+        <attribute name="accountType" optional="YES" attributeType="String"/>
+    </entity>
+    <entity name="AssetProperty" representedClassName="AssetProperty" syncable="YES" codeGenerationType="class"/>
+    <entity name="Item" representedClassName="Item" syncable="YES" codeGenerationType="class"/>
+    <entity name="ItemStock" representedClassName="ItemStock" syncable="YES" codeGenerationType="class"/>
+    <entity name="Tag" representedClassName="Tag" syncable="YES" codeGenerationType="class"/>
+    <entity name="TagAsset" representedClassName="TagAsset" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <relationship name="asset" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Asset" inverseName="tags" inverseEntity="Asset"/>
+        <relationship name="childTag" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TagAsset" inverseName="parentTag" inverseEntity="TagAsset"/>
+        <relationship name="parentTag" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="TagAsset" inverseName="childTag" inverseEntity="TagAsset"/>
+    </entity>
+    <entity name="TagTransaction" representedClassName="TagTransaction" syncable="YES" codeGenerationType="class"/>
+    <entity name="Transaction" representedClassName="Transaction" syncable="YES" codeGenerationType="class">
+        <attribute name="amount" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="memo" optional="YES" attributeType="String"/>
+        <attribute name="order" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <relationship name="asset" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Asset" inverseName="transactions" inverseEntity="Asset"/>
+        <relationship name="childTransactions" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Transaction" inverseName="parentTransaction" inverseEntity="Transaction"/>
+        <relationship name="parentTransaction" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Transaction" inverseName="childTransactions" inverseEntity="Transaction"/>
+    </entity>
+    <entity name="TransactionGeneral" representedClassName="TransactionGeneral" syncable="YES" codeGenerationType="class"/>
+    <entity name="TransactionStock" representedClassName="TransactionStock" syncable="YES" codeGenerationType="class"/>
 </model>
