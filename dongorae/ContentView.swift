@@ -2,19 +2,38 @@ import SwiftUI
 import CoreData
 
 struct ContentView: View {
-    // Core Data context
+    var body: some View {
+        TabView {
+            TransactionsPage()
+                .tabItem {
+                    Label("거래", systemImage: "list.bullet")
+                }
+
+            AssetsPage()
+                .tabItem {
+                    Label("자산", systemImage: "creditcard")
+                }
+
+            InvestmentsPage()
+                .tabItem {
+                    Label("투자", systemImage: "chart.line.uptrend.xyaxis")
+                }
+        }
+    }
+}
+
+private struct TransactionsPage: View {
     @Environment(\.managedObjectContext) private var context
 
-    // Fetch Request for Transaction entities
     @FetchRequest(
         sortDescriptors: [
             NSSortDescriptor(keyPath: \Transaction.date, ascending: false)
         ]
     ) private var transactions: FetchedResults<Transaction>
 
-    // UI State
     @State private var isPresentingForm = false
     @State private var editingTransaction: Transaction? = nil
+    @State private var headerAddDate: Date? = nil
 
     var body: some View {
         NavigationStack {
@@ -27,44 +46,66 @@ struct ContentView: View {
                     )
                 } else {
                     List {
-                        ForEach(transactions, id: \.objectID) { tx in
-                            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(tx.type ?? "유형 없음")
-                                        .font(.subheadline)
-                                        .lineLimit(1)
-                                        .truncationMode(.tail)
-                                    Text(formatDate(tx.date))
-                                        .font(.caption2)
-                                        .foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Text(formatPrice(tx.price))
-                                    .font(.footnote.monospacedDigit())
-                            }
-                            .contentShape(Rectangle())
-                            .padding(.vertical, 4)
-                            .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
-                            .onTapGesture { beginEditing(tx) }
-                            .contextMenu {
-                                Button {
-                                    beginEditing(tx)
-                                } label: {
-                                    Label("수정", systemImage: "pencil")
-                                }
-                                Button(role: .destructive) {
-                                    if let index = transactions.firstIndex(of: tx) {
-                                        deleteTransactions(at: IndexSet(integer: index))
+                        ForEach(groupedByDay(transactions: Array(transactions)), id: \.day) { section in
+                            Section(header:
+                                Button(action: { headerAddDate = section.day }) {
+                                    HStack {
+                                        Text(formatSectionDate(section.day))
+                                            .font(.headline)
+                                        Spacer()
+                                        Image(systemName: "plus.circle.fill")
+                                            .foregroundStyle(.tint)
+                                            .imageScale(.medium)
                                     }
-                                } label: {
-                                    Label("삭제", systemImage: "trash")
+                                    .contentShape(Rectangle())
+                                    .padding(.vertical, 4)
+                                }
+                                .buttonStyle(.plain)
+                            ) {
+                                ForEach(section.items, id: \.objectID) { tx in
+                                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(tx.type ?? "유형 없음")
+                                                .font(.subheadline)
+                                                .lineLimit(1)
+                                                .truncationMode(.tail)
+                                            Text(formatUUID(tx.id))
+                                                .font(.caption2.monospaced())
+                                                .foregroundStyle(.secondary)
+                                                .lineLimit(1)
+                                            Text(formatDate(tx.date))
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        Spacer()
+                                        Text(formatPrice(tx.price))
+                                            .font(.footnote.monospacedDigit())
+                                    }
+                                    .contentShape(Rectangle())
+                                    .padding(.vertical, 4)
+                                    .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
+                                    .onTapGesture { beginEditing(tx) }
+                                    .contextMenu {
+                                        Button {
+                                            beginEditing(tx)
+                                        } label: {
+                                            Label("수정", systemImage: "pencil")
+                                        }
+                                        Button(role: .destructive) {
+                                            if let index = transactions.firstIndex(of: tx) {
+                                                deleteTransactions(at: IndexSet(integer: index))
+                                            }
+                                        } label: {
+                                            Label("삭제", systemImage: "trash")
+                                        }
+                                    }
                                 }
                             }
                         }
                         .onDelete(perform: deleteTransactions)
                         .onMove(perform: moveTransactions)
                     }
-                    .listStyle(.plain)
+                    .listStyle(.grouped)
                     .listRowSpacing(4)
                 }
             }
@@ -90,6 +131,27 @@ struct ContentView: View {
                     onSave: { type, price, date in
                         addTransaction(type: type, price: price, date: date)
                         isPresentingForm = false
+                    }
+                )
+                .presentationDetents([.medium])
+            }
+            .sheet(item: Binding(
+                get: {
+                    headerAddDate.map { IdentifiedDate(value: $0) }
+                },
+                set: { newValue in
+                    headerAddDate = newValue?.value
+                }
+            )) { identified in
+                TransactionFormView(
+                    title: "거래 추가",
+                    initialType: "",
+                    initialPrice: 0,
+                    initialDate: identified.value,
+                    onCancel: { headerAddDate = nil },
+                    onSave: { type, price, date in
+                        addTransaction(type: type, price: price, date: date)
+                        headerAddDate = nil
                     }
                 )
                 .presentationDetents([.medium])
@@ -218,6 +280,64 @@ struct ContentView: View {
         formatter.timeStyle = .none
         return formatter.string(from: date)
     }
+
+    private func formatUUID(_ value: UUID?) -> String {
+        guard let value else { return "-" }
+        return value.uuidString
+    }
+
+    private struct IdentifiedDate: Identifiable {
+        let id = UUID()
+        let value: Date
+    }
+
+    private struct DaySection: Identifiable {
+        let id = UUID()
+        let day: Date
+        let items: [Transaction]
+    }
+
+    private func groupedByDay(transactions: [Transaction]) -> [DaySection] {
+        // Normalize dates to the start of day using current calendar
+        let calendar = Calendar.current
+        let groups = Dictionary(grouping: transactions) { (tx: Transaction) -> Date in
+            let date = tx.date ?? Date()
+            return calendar.startOfDay(for: date)
+        }
+        // Sort sections by day descending (to match list sort)
+        let sortedDays = groups.keys.sorted(by: { $0 > $1 })
+        return sortedDays.map { day in
+            let items = groups[day]?.sorted(by: { ($0.date ?? .distantPast) > ($1.date ?? .distantPast) }) ?? []
+            return DaySection(day: day, items: items)
+        }
+    }
+
+    private func formatSectionDate(_ day: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: day)
+    }
+}
+
+private struct AssetsPage: View {
+    var body: some View {
+        NavigationStack {
+            Text("자산 페이지")
+                .padding()
+                .navigationTitle("자산")
+        }
+    }
+}
+
+private struct InvestmentsPage: View {
+    var body: some View {
+        NavigationStack {
+            Text("투자 페이지")
+                .padding()
+                .navigationTitle("투자")
+        }
+    }
 }
 
 // MARK: - Form View
@@ -296,4 +416,3 @@ private struct TransactionFormView: View {
     ContentView()
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
 }
-
