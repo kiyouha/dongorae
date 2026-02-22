@@ -24,6 +24,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		09D709522F46EB9700138B56 /* CoreDataSpec.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CoreDataSpec.md; sourceTree = "<group>"; };
 		23E792962D8FD24C00C1DD15 /* dongorae.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = dongorae.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23E792AD2D8FD24E00C1DD15 /* dongoraeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = dongoraeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23E792B72D8FD24E00C1DD15 /* dongoraeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = dongoraeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -40,6 +41,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		09B1F6902E92979600BD7C33 /* upload */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = upload;
+			sourceTree = "<group>";
+		};
 		23E792982D8FD24C00C1DD15 /* dongorae */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -88,6 +94,8 @@
 		23E7928D2D8FD24C00C1DD15 = {
 			isa = PBXGroup;
 			children = (
+				09D709522F46EB9700138B56 /* CoreDataSpec.md */,
+				09B1F6902E92979600BD7C33 /* upload */,
 				23E792982D8FD24C00C1DD15 /* dongorae */,
 				23E792B02D8FD24E00C1DD15 /* dongoraeTests */,
 				23E792BA2D8FD24E00C1DD15 /* dongoraeUITests */,
@@ -121,6 +129,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				09B1F6902E92979600BD7C33 /* upload */,
 				23E792982D8FD24C00C1DD15 /* dongorae */,
 			);
 			name = dongorae;
@@ -308,6 +317,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = mygorae.dongorae;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -339,6 +349,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = mygorae.dongorae;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

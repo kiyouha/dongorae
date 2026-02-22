@@ -1,0 +1,51 @@
+{
+  "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/AppArchitecture/Data/AppStore.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/AppStore.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/AppStore.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/AppStore.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/AppStore.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/AppStore.swiftdeps"
+  },
+  "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/AppArchitecture/Data/CoreDataRepositories.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/CoreDataRepositories.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/CoreDataRepositories.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/CoreDataRepositories.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/CoreDataRepositories.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/CoreDataRepositories.swiftdeps"
+  },
+  "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/AppArchitecture/Domain/AppErrors.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/AppErrors.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/AppErrors.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/AppErrors.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/AppErrors.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/AppErrors.swiftdeps"
+  },
+  "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/AppArchitecture/Domain/AssetMutationUseCase.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/AssetMutationUseCase.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/AssetMutationUseCase.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/AssetMutationUseCase.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/AssetMutationUseCase.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/AssetMutationUseCase.swiftdeps"
+  },
+  "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/AppArchitecture/Domain/RepositoryContracts.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/RepositoryContracts.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/RepositoryContracts.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/RepositoryContracts.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/RepositoryContracts.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/RepositoryContracts.swiftdeps"
+  },
+  "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/AppArchitecture/Domain/TransactionMutationUseCase.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/TransactionMutationUseCase.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/TransactionMutationUseCase.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/TransactionMutationUseCase.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/TransactionMutationUseCase.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/TransactionMutationUseCase.swiftdeps"
+  },
+  "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/AppArchitecture/Domain/TransactionsQueryService.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/TransactionsQueryService.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/TransactionsQueryService.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/TransactionsQueryService.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/TransactionsQueryService.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/TransactionsQueryService.swiftdeps"
+  }
+}

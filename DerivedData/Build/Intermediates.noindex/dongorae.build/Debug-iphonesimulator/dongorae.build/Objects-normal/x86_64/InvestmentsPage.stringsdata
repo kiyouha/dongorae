@@ -1,0 +1,40 @@
+{
+  "source": "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/Investments/InvestmentsPage.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "투자",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "보유 종목이 없습니다",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 19
+        }
+      },
+      {
+        "comment": "",
+        "key": "거래 %lld건",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 29
+        }
+      },
+      {
+        "comment": "",
+        "key": "매수/매도 상세 내역은 거래내역 탭에서 Event-Transaction-Leg 구조로 확인할 수 있습니다.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 48
+        }
+      }
+    ]
+  },
+  "version": 1
+}

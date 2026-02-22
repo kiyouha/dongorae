@@ -1,0 +1,44 @@
+{
+  "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/DerivedSources/CoreDataGenerated/dongorae/PositionLeg+CoreDataClass.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/PositionLeg+CoreDataClass.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/PositionLeg+CoreDataClass.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/PositionLeg+CoreDataClass.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/PositionLeg+CoreDataClass.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/PositionLeg+CoreDataClass.swiftdeps"
+  },
+  "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/DerivedSources/CoreDataGenerated/dongorae/PositionLeg+CoreDataProperties.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/PositionLeg+CoreDataProperties.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/PositionLeg+CoreDataProperties.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/PositionLeg+CoreDataProperties.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/PositionLeg+CoreDataProperties.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/PositionLeg+CoreDataProperties.swiftdeps"
+  },
+  "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/DerivedSources/CoreDataGenerated/dongorae/Tag+CoreDataClass.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Tag+CoreDataClass.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Tag+CoreDataClass.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Tag+CoreDataClass.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Tag+CoreDataClass.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Tag+CoreDataClass.swiftdeps"
+  },
+  "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/DerivedSources/CoreDataGenerated/dongorae/Tag+CoreDataProperties.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Tag+CoreDataProperties.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Tag+CoreDataProperties.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Tag+CoreDataProperties.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Tag+CoreDataProperties.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Tag+CoreDataProperties.swiftdeps"
+  },
+  "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/DerivedSources/CoreDataGenerated/dongorae/Transaction+CoreDataClass.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Transaction+CoreDataClass.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Transaction+CoreDataClass.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Transaction+CoreDataClass.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Transaction+CoreDataClass.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Transaction+CoreDataClass.swiftdeps"
+  },
+  "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/DerivedSources/CoreDataGenerated/dongorae/Transaction+CoreDataProperties.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Transaction+CoreDataProperties.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Transaction+CoreDataProperties.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Transaction+CoreDataProperties.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Transaction+CoreDataProperties.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedDataLocal/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Transaction+CoreDataProperties.swiftdeps"
+  }
+}

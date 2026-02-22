@@ -1,0 +1,30 @@
+{
+  "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/Events/EventListView.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/EventListView.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/EventListView.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/EventListView.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/EventListView.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/EventListView.swiftdeps"
+  },
+  "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/Events/TagChip.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/TagChip.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/TagChip.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/TagChip.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/TagChip.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/TagChip.swiftdeps"
+  },
+  "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/Investments/InvestmentsPage.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/InvestmentsPage.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/InvestmentsPage.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/InvestmentsPage.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/InvestmentsPage.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/InvestmentsPage.swiftdeps"
+  },
+  "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/Settings/SettingsPage.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/SettingsPage.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/SettingsPage.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/SettingsPage.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/SettingsPage.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/arm64/SettingsPage.swiftdeps"
+  }
+}

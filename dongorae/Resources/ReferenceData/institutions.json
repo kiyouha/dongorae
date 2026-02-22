@@ -1,0 +1,15 @@
+[
+  { "id": "kb", "name": "국민은행", "assetClass": "bank" },
+  { "id": "shinhan", "name": "신한은행", "assetClass": "bank" },
+  { "id": "woori", "name": "우리은행", "assetClass": "bank" },
+  { "id": "hana", "name": "하나은행", "assetClass": "bank" },
+  { "id": "nh", "name": "농협은행", "assetClass": "bank" },
+  { "id": "kakao", "name": "카카오뱅크", "assetClass": "bank" },
+  { "id": "toss", "name": "토스뱅크", "assetClass": "bank" },
+  { "id": "samsung-sec", "name": "삼성증권", "assetClass": "brokerage" },
+  { "id": "mirae-sec", "name": "미래에셋증권", "assetClass": "brokerage" },
+  { "id": "nh-sec", "name": "NH투자증권", "assetClass": "brokerage" },
+  { "id": "kiwoom", "name": "키움증권", "assetClass": "brokerage" },
+  { "id": "kb-sec", "name": "KB증권", "assetClass": "brokerage" },
+  { "id": "shinhan-sec", "name": "신한투자증권", "assetClass": "brokerage" }
+]

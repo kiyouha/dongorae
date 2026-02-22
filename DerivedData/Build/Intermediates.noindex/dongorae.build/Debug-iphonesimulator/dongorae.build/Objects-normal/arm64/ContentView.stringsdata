@@ -1,0 +1,64 @@
+{
+  "source": "/Users/younghan/Desktop/dongorae/dongorae/dongorae/ContentView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "홈",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 11
+        }
+      },
+      {
+        "comment": "",
+        "key": "거래내역",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 16
+        }
+      },
+      {
+        "comment": "",
+        "key": "투자",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 21
+        }
+      },
+      {
+        "comment": "",
+        "key": "자산",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "더보기",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 88
+        }
+      },
+      {
+        "comment": "",
+        "key": "대시보드",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 92
+        }
+      }
+    ]
+  },
+  "version": 1
+}

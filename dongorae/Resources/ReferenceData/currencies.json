@@ -1,0 +1,8 @@
+[
+  { "code": "KRW", "name": "원", "symbol": "₩", "fractionDigits": 0 },
+  { "code": "USD", "name": "미국 달러", "symbol": "$", "fractionDigits": 2 },
+  { "code": "JPY", "name": "일본 엔", "symbol": "¥", "fractionDigits": 0 },
+  { "code": "EUR", "name": "유로", "symbol": "€", "fractionDigits": 2 },
+  { "code": "CNY", "name": "중국 위안", "symbol": "¥", "fractionDigits": 2 },
+  { "code": "HKD", "name": "홍콩 달러", "symbol": "$", "fractionDigits": 2 }
+]

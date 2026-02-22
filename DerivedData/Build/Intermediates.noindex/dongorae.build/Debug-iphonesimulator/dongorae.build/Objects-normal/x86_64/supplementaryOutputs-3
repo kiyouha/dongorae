@@ -1,0 +1,23 @@
+{
+  "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/Transactions/Transaction+ID.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Transaction+ID.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Transaction+ID.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Transaction+ID.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Transaction+ID.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/Transaction+ID.swiftdeps"
+  },
+  "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/Transactions/TransactionFormPage.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/TransactionFormPage.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/TransactionFormPage.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/TransactionFormPage.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/TransactionFormPage.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/TransactionFormPage.swiftdeps"
+  },
+  "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/Transactions/TransactionsPage.swift" : {
+    "const-values" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/TransactionsPage.swiftconstvalues",
+    "dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/TransactionsPage.d",
+    "diagnostics" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/TransactionsPage.dia",
+    "object" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/TransactionsPage.o",
+    "swift-dependencies" : "/Users/younghan/Desktop/dongorae/dongorae/DerivedData/Build/Intermediates.noindex/dongorae.build/Debug-iphonesimulator/dongorae.build/Objects-normal/x86_64/TransactionsPage.swiftdeps"
+  }
+}

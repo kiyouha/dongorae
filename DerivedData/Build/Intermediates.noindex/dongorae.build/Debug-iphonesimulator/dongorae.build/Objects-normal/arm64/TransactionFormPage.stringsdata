@@ -1,0 +1,568 @@
+{
+  "source": "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/Transactions/TransactionFormPage.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "거래 생성",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 126
+        }
+      },
+      {
+        "comment": "",
+        "key": "거래 편집",
+        "location": {
+          "startingColumn": 65,
+          "startingLine": 126
+        }
+      },
+      {
+        "comment": "",
+        "key": "1) Event",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 33
+        }
+      },
+      {
+        "comment": "",
+        "key": "2) Transaction",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 59
+        }
+      },
+      {
+        "comment": "",
+        "key": "3) Legs",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "기존 이벤트",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 34
+        }
+      },
+      {
+        "comment": "",
+        "key": "Event 제목",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 45
+        }
+      },
+      {
+        "comment": "",
+        "key": "Event 메모",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 46
+        }
+      },
+      {
+        "comment": "",
+        "key": "시작일",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 48
+        }
+      },
+      {
+        "comment": "",
+        "key": "종료일 입력",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 50
+        }
+      },
+      {
+        "comment": "",
+        "key": "종료일",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 52
+        }
+      },
+      {
+        "comment": "",
+        "key": "Event tags (쉼표 구분)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 55
+        }
+      },
+      {
+        "comment": "",
+        "key": "새 이벤트",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 35
+        }
+      },
+      {
+        "comment": "",
+        "key": "Transaction 제목",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "타입",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 62
+        }
+      },
+      {
+        "comment": "",
+        "key": "기준일",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 68
+        }
+      },
+      {
+        "comment": "",
+        "key": "체결일 입력",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 70
+        }
+      },
+      {
+        "comment": "",
+        "key": "체결일",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 72
+        }
+      },
+      {
+        "comment": "",
+        "key": "메모",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 75
+        }
+      },
+      {
+        "comment": "",
+        "key": "Transaction tags (쉼표 구분)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 76
+        }
+      },
+      {
+        "comment": "",
+        "key": "Leg를 최소 1개 추가하세요",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "CashLeg 추가",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 101
+        }
+      },
+      {
+        "comment": "",
+        "key": "PositionLeg 추가",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 109
+        }
+      },
+      {
+        "comment": "",
+        "key": "Transaction 삭제",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 121
+        }
+      },
+      {
+        "comment": "",
+        "key": "취소",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 130
+        }
+      },
+      {
+        "comment": "",
+        "key": "저장",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 133
+        }
+      },
+      {
+        "comment": "",
+        "key": "CashLeg",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 269
+        }
+      },
+      {
+        "comment": "",
+        "key": "PositionLeg",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 269
+        }
+      },
+      {
+        "comment": "",
+        "key": "Leg 편집",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 366
+        }
+      },
+      {
+        "comment": "",
+        "key": "기본",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 313
+        }
+      },
+      {
+        "comment": "",
+        "key": "CashLeg",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 342
+        }
+      },
+      {
+        "comment": "",
+        "key": "PositionLeg",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 352
+        }
+      },
+      {
+        "comment": "",
+        "key": "종류",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 314
+        }
+      },
+      {
+        "comment": "",
+        "key": "Direction",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 319
+        }
+      },
+      {
+        "comment": "",
+        "key": "Role",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 325
+        }
+      },
+      {
+        "comment": "",
+        "key": "자산",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 331
+        }
+      },
+      {
+        "comment": "",
+        "key": "노트",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 338
+        }
+      },
+      {
+        "comment": "",
+        "key": "CashLeg",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 315
+        }
+      },
+      {
+        "comment": "",
+        "key": "PositionLeg",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 316
+        }
+      },
+      {
+        "comment": "",
+        "key": "out",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 320
+        }
+      },
+      {
+        "comment": "",
+        "key": "in",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 321
+        }
+      },
+      {
+        "comment": "",
+        "key": "자동 선택",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 332
+        }
+      },
+      {
+        "comment": "",
+        "key": "금액",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 343
+        }
+      },
+      {
+        "comment": "",
+        "key": "통화",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 345
+        }
+      },
+      {
+        "comment": "",
+        "key": "FX Rate (옵션)",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 348
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ticker",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 353
+        }
+      },
+      {
+        "comment": "",
+        "key": "Market",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 356
+        }
+      },
+      {
+        "comment": "",
+        "key": "수량",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 358
+        }
+      },
+      {
+        "comment": "",
+        "key": "Price (옵션)",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 360
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unit",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 362
+        }
+      },
+      {
+        "comment": "",
+        "key": "Leg 편집",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 466
+        }
+      },
+      {
+        "comment": "",
+        "key": "공통",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 411
+        }
+      },
+      {
+        "comment": "",
+        "key": "CashLeg",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 433
+        }
+      },
+      {
+        "comment": "",
+        "key": "PositionLeg",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 443
+        }
+      },
+      {
+        "comment": "",
+        "key": "Direction",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 412
+        }
+      },
+      {
+        "comment": "",
+        "key": "Role",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 418
+        }
+      },
+      {
+        "comment": "",
+        "key": "자산",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 424
+        }
+      },
+      {
+        "comment": "",
+        "key": "in",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 413
+        }
+      },
+      {
+        "comment": "",
+        "key": "out",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 414
+        }
+      },
+      {
+        "comment": "",
+        "key": "자동 선택",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 425
+        }
+      },
+      {
+        "comment": "",
+        "key": "금액",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 434
+        }
+      },
+      {
+        "comment": "",
+        "key": "통화",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 436
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ticker",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 444
+        }
+      },
+      {
+        "comment": "",
+        "key": "Market",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 447
+        }
+      },
+      {
+        "comment": "",
+        "key": "수량",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 449
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unit",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 451
+        }
+      },
+      {
+        "comment": "",
+        "key": "Price",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 452
+        }
+      },
+      {
+        "comment": "",
+        "key": "Leg 삭제",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 462
+        }
+      },
+      {
+        "comment": "",
+        "key": "취소",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 470
+        }
+      },
+      {
+        "comment": "",
+        "key": "저장",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 473
+        }
+      }
+    ]
+  },
+  "version": 1
+}

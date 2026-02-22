@@ -1,0 +1,80 @@
+{
+  "source": "/Users/younghan/Desktop/dongorae/dongorae/dongorae/src/Events/EventListView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "거래내역",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 78
+        }
+      },
+      {
+        "comment": "",
+        "key": "샘플 데이터가 자동으로 생성됩니다.",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 24
+        }
+      },
+      {
+        "comment": "",
+        "key": "거래가 없습니다",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "범위",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 29
+        }
+      },
+      {
+        "comment": "",
+        "key": "월별/주별 지출 분석",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "샘플 추가",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "빠른 지출 입력",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 103
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ ~ %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 215
+        }
+      },
+      {
+        "comment": "",
+        "key": "전표 %lld건",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 218
+        }
+      }
+    ]
+  },
+  "version": 1
+}
