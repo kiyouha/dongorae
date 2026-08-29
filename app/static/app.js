@@ -327,12 +327,14 @@ function renderDashboard() {
 /* ── 자산 배분 색 ─────────────────────────────────────────────────────
    한 벌만 쓴다. 예전엔 도넛과 배분막대가 서로 다른 팔레트를 돌리고, 보유·소유자
    칩은 이름 해시로 색을 만들어 냈다(같은 화면에 팔레트가 셋).
-   이 순서는 어두운 면(#0e0f11) 기준으로 검증했다 — 맞닿은 조각끼리 적/녹색맹에서
-   ΔE 9.4, 일반 시야에서 19.3으로 떨어져 있고 넷 다 표면 대비 3:1을 넘는다.
-   · 빨강은 뺐다. 상승(--gain)과 ΔE 2.1이라 조각이 '이익'으로 읽힌다.
-   · 7개를 넘으면 색을 돌려 쓰지 않고 '기타'(중립 회색)로 접는다.
+   2026-08-30부터 화면 전체가 여섯 색만 쓴다(base.css --c-*). 도넛도 그 여섯 개다.
+   · 순서는 맞닿는 조각이 색상과 밝기 둘 다 달라지게 짰다(파랑·주황·녹색·코인·빨강·연녹색).
+     녹색과 빨강을 붙이지 않은 건 적록색맹에서 가장 먼저 뭉개지는 짝이라서다.
+   · 빨강이 상승(--gain)과 같은 색이라, 조각 하나가 '이익'처럼 읽힐 수 있다.
+     도넛엔 항상 범례가 붙으니 그대로 두되, 색만으로 판단하게 만들지 말 것.
+   · 여섯 개를 넘으면 색을 돌려 쓰지 않고 '기타'(중립 회색)로 접는다.
    · 색은 순위가 아니라 항목을 따라간다. 필터로 개수가 변해도 남은 것의 색이 안 바뀐다. */
-const ALLOC_COLORS = ["#199e70", "#d95926", "#9085e9", "#c98500", "#d55181", "#008300", "#3987e5"];
+const ALLOC_COLORS = ["#6998cc", "#c69972", "#66bd9d", "#fbcb45", "#df645f", "#abe2bc"];
 const ALLOC_OTHER = "#8a8f98";
 const ALLOC_MAX = ALLOC_COLORS.length;
 const _allocSlots = {};
@@ -345,7 +347,7 @@ function allocColor(group, label) {
 /* 캔버스는 color-mix를 못 읽는다 — 토큰 hex를 rgba로 바꿔 쓴다. */
 function rgba(hex, a) {
   const h = String(hex || "").trim().replace("#", "");
-  if (h.length !== 6) return `rgba(47,185,141,${a})`;
+  if (h.length !== 6) return `rgba(102,189,157,${a})`;
   return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`;
 }
 
@@ -2036,76 +2038,183 @@ async function deleteAlias(name) {
   await api("api/symbols/alias?name=" + encodeURIComponent(name), { method: "DELETE" });
   loadAliases();
 }
-// 종목 관리(통합): 거래내역 등장 종목별 티커+표시명 편집 (정렬·표시명 자동완성)
-let SYM_ITEMS = [], symSort = { key: "name", dir: "asc" };
+// 종목 관리: 읽기가 기본, 고칠 행만 펼쳐서 편집한다.
+//   한 줄 = 티커 하나(=시세 하나). 그 아래 '원래 이름'들이 이 티커로 묶여 있다.
+//   화면의 일거리는 '티커 없음'(시세가 안 붙는 종목)이라, 그것만 따로 걸러 볼 수 있게 했다.
+let SYM_ITEMS = [], symQ = "", symFilter = "all", symEditKey = null, symLoadErr = false;
 async function loadAliases() {
   const box = $("#symMgrList"); if (!box) return;
-  let d; try { d = await api("api/symbols/aliases"); } catch (_) { box.innerHTML = `<div class="blank"><div class="t">불러오지 못했습니다</div><div class="d">잠시 후 다시 시도해 주세요.</div></div>`; return; }
-  if ($("#symCount")) $("#symCount").textContent = `전체 상장목록 ${(d.symbols_count || 0).toLocaleString()}개 캐시됨`;
+  box.innerHTML = symSkeleton();
+  let d;
+  try { d = await api("api/symbols/aliases"); }
+  catch (_) {
+    symLoadErr = true;
+    box.innerHTML = `<div class="blank"><div class="t">종목을 불러오지 못했습니다</div>
+      <div class="d">잠시 후 다시 시도해 주세요.</div>
+      <div class="a"><button class="refresh" id="symRetry">다시 시도</button></div></div>`;
+    const r = $("#symRetry"); if (r) r.addEventListener("click", loadAliases);
+    return;
+  }
+  symLoadErr = false;
   DISPLAY = d.display || DISPLAY;
   SYM_ITEMS = d.instruments || [];
+  SYM_COUNT = d.symbols_count || 0;
   renderSymMgr();
 }
+let SYM_COUNT = 0;
+const symSkeleton = () => `<div class="sym-list">${
+  Array.from({ length: 6 }, () => `<div class="sym-item skel"><span class="sk sk-1"></span><span class="sk sk-2"></span></div>`).join("")}</div>`;
 const symName = it => (it.names && it.names[0]) || "";
 const symKey = it => it.ticker || symName(it);
+const symLabel = it => DISPLAY[symKey(it)] || symName(it);
+
+function symMatch(it) {
+  if (symFilter === "noticker" && it.ticker) return false;
+  if (symFilter === "merged" && (it.names || []).length < 2) return false;
+  const q = symQ.trim().toLowerCase();
+  if (!q) return true;
+  return [it.ticker || "", DISPLAY[symKey(it)] || "", ...(it.names || [])]
+    .some(v => v.toLowerCase().includes(q));
+}
+
 function renderSymMgr() {
   const box = $("#symMgrList"); if (!box) return;
-  if (!SYM_ITEMS.length) { box.innerHTML = `<div class="blank"><div class="t">거래내역에 종목이 없습니다</div><div class="d">거래를 올리면 종목이 자동으로 여기 모입니다.</div></div>`; return; }
-  const val = (it, k) => k === "ticker" ? (it.ticker || "") : k === "display" ? (DISPLAY[symKey(it)] || "") : symName(it);
-  const rows = SYM_ITEMS.slice().sort((a, b) =>
-    (val(a, symSort.key).localeCompare(val(b, symSort.key), "ko") || symName(a).localeCompare(symName(b), "ko")) * (symSort.dir === "asc" ? 1 : -1));
+  const noTicker = SYM_ITEMS.filter(it => !it.ticker).length;
+  const cnt = $("#symCount");
+  if (cnt) cnt.innerHTML = SYM_ITEMS.length
+    ? `종목 <b>${SYM_ITEMS.length}</b>` + (noTicker ? ` · 티커 없음 <b class="warn-ink">${noTicker}</b>` : " · 티커 모두 연결됨")
+      + `<span class="sym-cache">상장목록 ${SYM_COUNT.toLocaleString()}개 캐시</span>`
+    : "";
+
+  if (!SYM_ITEMS.length) {
+    box.innerHTML = `<div class="blank"><div class="t">아직 종목이 없습니다</div>
+      <div class="d">거래내역을 올리면 종목이 자동으로 여기 모입니다. 거래에 없는 종목은 위 '종목 추가'로 넣으세요.</div></div>`;
+    return;
+  }
+  // 티커 없는 것(할 일)을 위로, 그다음 이름순.
+  const rows = SYM_ITEMS.filter(symMatch).sort((a, b) =>
+    (!a.ticker) - (!b.ticker) || symLabel(a).localeCompare(symLabel(b), "ko"));
+  if (!rows.length) {
+    box.innerHTML = `<div class="blank"><div class="t">조건에 맞는 종목이 없습니다</div>
+      <div class="d">검색어를 지우거나 필터를 '전체'로 바꿔 보세요.</div></div>`;
+    return;
+  }
   const suggest = [...new Set(Object.values(DISPLAY).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ko"));
   const allNames = [...new Set(SYM_ITEMS.flatMap(it => it.names || []))].sort((a, b) => a.localeCompare(b, "ko"));
-  const arrow = k => symSort.key === k ? (symSort.dir === "asc" ? " ▲" : " ▼") : "";
-  const th = (k, label) => `<th class="sortable sym-th${symSort.key === k ? " sorted" : ""}" data-k="${k}">${label}${arrow(k)}</th>`;
-  const nAll = SYM_ITEMS.reduce((s, it) => s + (it.names ? it.names.length : 1), 0);
-  box.innerHTML = `<div class="card strip">티커 기준 <b>${SYM_ITEMS.length}줄</b> · 원래 이름 <b>${nAll}개</b>.
-      원래 이름은 ×로 빼고 '+ 이름'으로 더합니다(잘못 묶인 것 수정). 티커·표시명은 저장 버튼을 누르세요.</div>
-    <datalist id="dispSuggest">${suggest.map(s => `<option value="${esc(s)}"></option>`).join("")}</datalist>
-    <datalist id="allNamesList">${allNames.map(s => `<option value="${esc(s)}"></option>`).join("")}</datalist>
-    <div class="tablewrap"><table class="compact"><thead><tr>
-    ${th("ticker", "티커")}${th("display", "표시명")}${th("name", "원래 이름")}<th></th></tr></thead><tbody>${rows.map(it => {
-      const names = it.names || [], key = symKey(it), first = names[0] || "";
-      const chips = names.map(nm => `<span class="sym-chip">${esc(nm)}<a class="chipDel" data-name="${esc(nm)}" title="이 티커에서 빼기(별칭 삭제)">×</a></span>`).join("");
-      const addCtl = it.ticker
-        ? `<input class="chipAdd" list="allNamesList" placeholder="+ 이름">`
-        : `<span class="muted" style="font-size:var(--fs-2xs)">티커 저장 후 추가</span>`;
-      return `<tr class="sym-row">
-        <td><input class="smTicker" data-orig="${esc(it.ticker || "")}" value="${esc(it.ticker || "")}" placeholder="티커"></td>
-        <td><input class="smDisp" list="dispSuggest" value="${esc(DISPLAY[key] || "")}" placeholder="${esc(first.length > 16 ? first.slice(0, 16) + "…" : first)}"></td>
-        <td class="sym-names"><div class="sym-chips">${chips}${addCtl}</div></td>
-        <td class="r"><button class="mini smSave" data-key="${esc(key)}">저장</button></td></tr>`;
-    }).join("")}</tbody></table></div>`;
+
+  box.innerHTML = `
+    <datalist id="dispSuggest">${suggest.map(v => `<option value="${esc(v)}"></option>`).join("")}</datalist>
+    <datalist id="allNamesList">${allNames.map(v => `<option value="${esc(v)}"></option>`).join("")}</datalist>
+    <div class="sym-list">${rows.map(symRow).join("")}</div>`;
+  symBind(box);
+}
+
+function symRow(it, idx) {
+  const key = symKey(it), names = it.names || [], label = symLabel(it);
+  const fid = `sym${idx}`;   // id는 렌더 순번으로 — 종목명엔 공백이 섞일 수 있다.
+  const editing = symEditKey === key;
+  const tk = it.ticker
+    ? `<span class="badge sym-tk">${esc(it.ticker)}</span>`
+    : `<span class="badge b-warn sym-tk">티커 없음</span>`;
+  // 표시명을 따로 지정했을 때만 원래 이름을 덧붙인다(같으면 중복이라 안 보여준다).
+  const alt = names.filter(n => n !== label);
+  const head = `
+    <div class="sym-head">
+      <div class="sym-main">
+        <div class="sym-title">${esc(label)}</div>
+        ${alt.length ? `<div class="sym-alt">${alt.map(esc).join(", ")}</div>` : ""}
+      </div>
+      ${tk}
+      <button class="mini symEdit" data-key="${esc(key)}" aria-expanded="${editing}">${editing ? "닫기" : "고치기"}</button>
+    </div>`;
+  if (!editing) return `<div class="sym-item" data-key="${esc(key)}">${head}</div>`;
+
+  const chips = names.map(nm =>
+    `<span class="sym-chip">${esc(nm)}<button class="chipDel" data-name="${esc(nm)}" title="이 티커에서 빼기" aria-label="${esc(nm)} 빼기">×</button></span>`).join("");
+  return `<div class="sym-item open" data-key="${esc(key)}">${head}
+    <div class="sym-edit">
+      <div class="form-grid">
+        <div class="field">
+          <label for="tk-${fid}">티커</label>
+          <input id="tk-${fid}" class="smTicker" data-orig="${esc(it.ticker || "")}" value="${esc(it.ticker || "")}" placeholder="예: KO, 005930">
+          <span class="hint">시세를 받아올 코드. 비우면 자동 해석으로 돌아갑니다.</span>
+        </div>
+        <div class="field">
+          <label for="dp-${fid}">표시명</label>
+          <input id="dp-${fid}" class="smDisp" list="dispSuggest" value="${esc(DISPLAY[key] || "")}" placeholder="${esc(symName(it))}">
+          <span class="hint">화면에 이 이름으로 나옵니다. 비우면 원래 이름을 씁니다.</span>
+        </div>
+        <div class="field full">
+          <label>이 티커로 묶인 원래 이름</label>
+          <div class="sym-chips">${chips}${it.ticker
+            ? `<input class="chipAdd" list="allNamesList" placeholder="이름 추가" aria-label="이 티커에 원래 이름 추가">`
+            : `<span class="hint">티커를 저장하면 다른 이름도 묶을 수 있습니다.</span>`}</div>
+          <span class="hint">증권사마다 이름이 달라 따로 잡힌 종목을 여기서 하나로 묶습니다.</span>
+        </div>
+        <div class="form-acts">
+          <button class="refresh primary smSave" data-key="${esc(key)}">저장</button>
+          <button class="mini cancel symCancel">취소</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function symBind(box) {
+  box.querySelectorAll(".symEdit").forEach(b => b.addEventListener("click", () => {
+    symEditKey = symEditKey === b.dataset.key ? null : b.dataset.key;
+    renderSymMgr();
+    if (symEditKey) { const f = document.querySelector(".sym-item.open .smTicker"); if (f) f.focus(); }
+  }));
+  box.querySelectorAll(".symCancel").forEach(b => b.addEventListener("click", () => { symEditKey = null; renderSymMgr(); }));
   box.querySelectorAll(".smSave").forEach(b => b.addEventListener("click", () => saveSymMgr(b)));
   box.querySelectorAll(".chipDel").forEach(a => a.addEventListener("click", () => chipDelName(a.dataset.name)));
   box.querySelectorAll(".chipAdd").forEach(inp => inp.addEventListener("change", () => chipAddName(inp)));
-  box.querySelectorAll(".sym-th").forEach(h => h.addEventListener("click", () => {
-    const k = h.dataset.k;
-    if (symSort.key === k) symSort.dir = symSort.dir === "asc" ? "desc" : "asc";
-    else { symSort.key = k; symSort.dir = "asc"; }
-    renderSymMgr();
+  // 엔터로 저장 — 값 두 개짜리 폼에서 마우스로 옮겨가지 않게.
+  box.querySelectorAll(".smTicker, .smDisp").forEach(inp => inp.addEventListener("keydown", e => {
+    if (e.key === "Enter") { const b = inp.closest(".sym-item").querySelector(".smSave"); if (b) b.click(); }
   }));
 }
+
+function symBindControls() {
+  const q = $("#symQ"); if (q && !q._bound) { q._bound = true; q.addEventListener("input", () => { symQ = q.value; symEditKey = null; renderSymMgr(); }); }
+  const f = $("#symFilter"); if (f && !f._bound) {
+    f._bound = true;
+    f.addEventListener("click", e => {
+      const b = e.target.closest("button[data-f]"); if (!b) return;
+      symFilter = b.dataset.f; symEditKey = null;
+      f.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+      renderSymMgr();
+    });
+  }
+  const open = $("#symAddOpen"), card = $("#symAddCard"), close = $("#symAddClose");
+  if (open && card && !open._bound) {
+    open._bound = true;
+    open.addEventListener("click", () => { card.hidden = !card.hidden; if (!card.hidden) $("#alName").focus(); });
+    if (close) close.addEventListener("click", () => { card.hidden = true; });
+  }
+}
+
 async function symReload() { await loadAliases(); if (PORTFOLIO) renderHoldSummary(); renderHoldings("#investHoldings"); if (mState.loaded) loadMovements(); }
 async function chipDelName(nm) {   // 원래 이름을 이 티커에서 빼기(별칭 삭제 → 자동 해석)
-  if (!confirm(`'${nm}'을(를) 이 티커 매핑에서 뺄까요?\n(별칭 삭제 → 자동 해석으로 되돌아갑니다)`)) return;
+  if (!confirm(`'${nm}'을(를) 이 티커에서 뺄까요?\n(별칭 삭제 → 자동 해석으로 되돌아갑니다)`)) return;
   try { await api("api/symbols/alias?name=" + encodeURIComponent(nm), { method: "DELETE" }); toast("뺐어요"); await symReload(); }
-  catch (_) { toast("실패"); }
+  catch (_) { toast("빼지 못했습니다"); }
 }
 async function chipAddName(inp) {   // 다른 원래 이름을 이 티커에 추가(별칭)
   const nm = inp.value.trim(); if (!nm) return;
-  const ticker = inp.closest("tr").querySelector(".smTicker").value.trim().toUpperCase();
-  if (!ticker) { toast("먼저 티커를 입력·저장하세요"); inp.value = ""; return; }
-  try { await api("api/symbols/alias", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: nm, ticker }) }); toast(`${nm} → ${ticker} 추가`); await symReload(); }
-  catch (_) { toast("실패"); }
+  const ticker = inp.closest(".sym-item").querySelector(".smTicker").value.trim().toUpperCase();
+  if (!ticker) { toast("먼저 티커를 저장하세요"); inp.value = ""; return; }
+  try { await api("api/symbols/alias", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: nm, ticker }) }); toast(`${nm} → ${ticker} 묶음`); await symReload(); }
+  catch (_) { toast("추가하지 못했습니다"); }
 }
 async function saveSymMgr(b) {
-  const row = b.closest("tr"), key = b.dataset.key;
+  const row = b.closest(".sym-item"), key = b.dataset.key;
   const grp = SYM_ITEMS.find(x => symKey(x) === key), names = (grp && grp.names) || [key];
   const ticker = row.querySelector(".smTicker").value.trim().toUpperCase();
   const orig = (row.querySelector(".smTicker").dataset.orig || "").toUpperCase();
   const display = row.querySelector(".smDisp").value.trim(), dkey = ticker || key;
-  b.disabled = true;
+  b.disabled = true; b.textContent = "저장 중…";
   try {
     if (ticker && ticker !== orig)                         // 티커 변경/신규 → 그룹의 모든 원래 이름에 별칭
       for (const nm of names) await api("api/symbols/alias", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: nm, ticker }) });
@@ -2114,10 +2223,10 @@ async function saveSymMgr(b) {
     await api("api/symbols/display", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: dkey, display }) });
     if (display) DISPLAY[dkey] = display; else delete DISPLAY[dkey];
     if (grp) grp.ticker = ticker;
-    toast("저장됨" + (ticker && ticker !== orig ? " · 티커는 시세 갱신 후 반영" : ""));
+    symEditKey = null;
+    toast("저장됨" + (ticker && ticker !== orig ? " · 시세는 다음 갱신 때 반영" : ""));
     await symReload();
-  } catch (_) { toast("저장 실패"); }
-  b.disabled = false;
+  } catch (_) { toast("저장하지 못했습니다"); b.disabled = false; b.textContent = "저장"; }
 }
 async function loadReconcile(e) {   // 계산 예수금 vs 브로커 예수금 대사표
   const btn = e.target, box = $("#reconcileBox");
@@ -3363,7 +3472,7 @@ function onSubShow(viewId, sub) {   // 하위탭 최초 표시 시 지연 로드
     // watchstock = 준비중(스켈레톤)
   } else if (viewId === "view-admin") {
     if (sub === "acctmgr") { renderAccounts(); loadAcctMgr(); loadOwnedMgr(); ownedSideFields(); debtKindFields(); }
-    else if (sub === "alias") { if (!_subLoaded[key]) { _subLoaded[key] = true; loadAliases(); } }
+    else if (sub === "alias") { symBindControls(); if (!_subLoaded[key]) { _subLoaded[key] = true; loadAliases(); } }
     else if (sub === "family") loadFamily();
     // data·danger = 정적
   }

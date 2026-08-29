@@ -8,16 +8,14 @@
   <link rel="icon" type="image/png" sizes="192x192" href="static/img/icon-192.png?v=1">
   <link rel="apple-touch-icon" sizes="180x180" href="static/img/icon-180.png?v=1">
   <meta name="theme-color" content="#08090a">
-  <link rel="stylesheet" href="static/styles.css?v=20260826c">
-  <link rel="stylesheet" href="/shared/base.css?v=20260826c">
+  <link rel="stylesheet" href="static/styles.css?v=20260830a">
+  <link rel="stylesheet" href="/shared/base.css?v=20260830a">
 </head>
 <body>
   <div class="app">
     <aside class="side">
       <div class="side-top">
         <div class="brand"><img src="static/img/icon-48.png?v=2" alt="" class="brand-icon"> 돈고래</div>
-        <a class="app-switch" href="/doc/" title="문서고래로 이동" aria-label="문서고래로 이동">
-          <img src="/doc/static/img/icon-48.png?v=2" alt=""><span>문서고래</span></a>
       </div>
       <nav class="side-nav" id="sideNav">
       <div class="nav-group">
@@ -54,8 +52,6 @@
             <div class="v num" id="totalAsset">-</div>
             <div class="l" id="totalSub">불러오는 중…</div>
           </div>
-          <a class="app-switch" href="/doc/" title="문서고래로 이동" aria-label="문서고래로 이동">
-            <img src="/doc/static/img/icon-48.png?v=2" alt=""><span>문서고래</span></a>
         </div>
       </div>
 
@@ -558,25 +554,48 @@
         <section>
           <div class="page-hd">
             <h2>종목 관리</h2>
-            <span class="sub">티커는 시세 연결에, 표시명은 긴 이름을 짧게 쓰는 데 씁니다</span>
-            <span class="acts"><span id="symCount" class="muted" style="font-size:var(--fs-xs)"></span>
-              <button id="symSync" class="pill-reset" title="KRX + 미국 전체 상장목록을 다시 받습니다">상장목록 갱신</button></span>
+            <span class="sub">티커를 붙이면 시세가 자동으로 따라옵니다. 표시명은 긴 종목명을 짧게 바꿔 부르는 이름입니다.</span>
+            <span class="acts">
+              <button id="symAddOpen" class="refresh">종목 추가</button>
+              <button id="symSync" class="pill-reset" title="KRX + 미국 전체 상장목록을 다시 받습니다">상장목록 갱신</button>
+            </span>
           </div>
-          <div class="card pad">
-            <div id="symMgrList"><div class="muted">불러오는 중…</div></div>
-            <details class="help" style="margin-top:var(--sp-3)">
-              <summary>목록에 없는 종목 직접 추가</summary>
-              <div class="help-body">
-                <div class="form-grid" style="max-width:520px">
-                  <div class="field wide"><label for="alName">종목명</label><input id="alName" placeholder="코카콜라"></div>
-                  <div class="field"><label for="alTicker">티커</label><input id="alTicker" placeholder="KO"></div>
-                  <div class="field"><label for="alCcy">시장</label>
-                    <select id="alCcy"><option value="USD">미국(USD)</option><option value="KRW">국내(KRW)</option></select></div>
-                  <div class="form-acts"><button id="alSave" class="refresh primary">추가</button></div>
-                </div>
+
+          <!-- 거래내역에 없는 종목을 손으로 넣을 때만 편다 -->
+          <div class="card pad sym-add" id="symAddCard" hidden>
+            <div class="form-grid" style="max-width:640px">
+              <div class="field wide">
+                <label for="alName">종목명</label>
+                <input id="alName" placeholder="코카콜라">
+                <span class="hint">증권사 파일에 적힌 이름 그대로 넣으면 그 종목으로 묶입니다.</span>
               </div>
-            </details>
+              <div class="field">
+                <label for="alTicker">티커</label>
+                <input id="alTicker" placeholder="KO">
+                <span class="hint">시세를 받아올 코드</span>
+              </div>
+              <div class="field">
+                <label for="alCcy">시장</label>
+                <select id="alCcy"><option value="USD">미국(USD)</option><option value="KRW">국내(KRW)</option></select>
+              </div>
+              <div class="form-acts">
+                <button id="alSave" class="refresh primary">추가</button>
+                <button id="symAddClose" class="mini cancel">닫기</button>
+              </div>
+            </div>
           </div>
+
+          <div class="toolbar sym-bar">
+            <input type="search" id="symQ" placeholder="종목명·티커 검색" aria-label="종목 검색">
+            <span class="ranges" id="symFilter">
+              <button data-f="all" class="on">전체</button>
+              <button data-f="noticker">티커 없음</button>
+              <button data-f="merged">이름 여러 개</button>
+            </span>
+            <span id="symCount" class="muted sym-count"></span>
+          </div>
+
+          <div id="symMgrList" aria-live="polite"></div>
         </section>
       </div>
       </div>
@@ -721,6 +740,6 @@
 
   <div class="toast" id="toast"></div>
   <div class="busy" id="busy"><span class="busy-dot"></span>반영중…</div>
-  <script src="static/app.js?v=20260826c"></script>
+  <script src="static/app.js?v=20260830a"></script>
 </body>
 </html>

@@ -115,10 +115,10 @@ tbody tr:hover { background: var(--surface-2); }
 .b-FEE, .b-TAX { background: var(--t-fee); }
 .b-INTEREST { background: var(--t-int); }
 .b-TRANSFER { background: #7c8894; }
-.b-EXCHANGE { background: #0891b2; }
+.b-EXCHANGE { background: var(--c-blue); }
 .b-XFER_IN, .b-XFER_OUT { background: #7c8894; }
-.b-FX_IN, .b-FX_OUT { background: #0891b2; }
-.b-IPO_IN, .b-IPO_OUT, .b-SUBSCRIPTION { background: #7c5cbf; }
+.b-FX_IN, .b-FX_OUT { background: var(--c-blue); }
+.b-IPO_IN, .b-IPO_OUT, .b-SUBSCRIPTION { background: var(--c-orange); }
 .b-k { background: #97a3ad; }
 /* 유형 칩(옅은 색조, 테마 적응) */
 .badge.chip-in  { background: color-mix(in srgb, var(--gain) 14%, var(--surface)); color: var(--gain); }
@@ -261,8 +261,6 @@ td.acts .mini { padding: 2px 7px; }
   .pager button { height: 40px; }
 }
 
-.sym-chip { display: inline-flex; align-items: center; gap: 3px; font-size: var(--fs-xs); background: var(--surface-3);
-  border-radius: 6px; padding: 2px 4px 2px 7px; color: var(--ink-2); white-space: nowrap; }
 /* 헤더 브랜드 아이콘 */
 .brand-icon { width: 22px; height: 22px; vertical-align: -4px; }
 
@@ -296,19 +294,30 @@ td.acts .mini { padding: 2px 7px; }
   --line:        #232529;
   --line-strong: #33353b;
 
-  /* 강조 — 앱 아이콘 민트. 화면 전체에서 이 색 하나만 쓴다.
-     채도를 낮춰 '버튼과 포커스에만' 나타나게 한다. */
-  --accent:      #2fb98d;
-  --accent-ink:  #4ed7ab;                                   /* 민트 글자 · hover */
-  --accent-on:   #04150f;                                   /* 민트 위에 얹는 글자 */
-  --accent-soft: color-mix(in srgb, var(--accent) 13%, var(--surface));
-  --gold:        #d9ad4f;
+  /* ── 색은 이 여섯 개가 전부다 ────────────────────────────────
+     녹색 #66bd9d · 연녹색 #abe2bc · 코인 #fbcb45 · 파랑 #6998cc · 빨강 #df645f · 주황 #c69972
+     검정·회색·흰색(면과 글자)은 위에서 정한 그대로. 새 색을 들이지 말고
+     역할이 필요하면 아래 여섯 개 중에서 고른다. */
+  --c-green:      #66bd9d;
+  --c-green-soft: #abe2bc;
+  --c-coin:       #fbcb45;
+  --c-blue:       #6998cc;
+  --c-red:        #df645f;
+  --c-orange:     #c69972;
 
-  /* 금액 — 한국식(오름 빨강 / 내림 파랑). 어두운 바탕이라 한 단계 밝게, 대신 덜 쨍하게. */
-  --gain: #ee6a5f;
-  --loss: #6c9ff2;
-  --t-buy: #ee6a5f; --t-sell: #6c9ff2; --t-div: #2fb98d;
-  --t-dep: #35c2a8; --t-wd: #dd9a4a; --t-fee: #8a8f98; --t-int: #8d86e8;
+  /* 강조 — 녹색 하나. 채도를 낮춰 '버튼과 포커스에만' 나타나게 한다. */
+  --accent:      var(--c-green);
+  --accent-ink:  var(--c-green-soft);                       /* 녹색 글자 · hover */
+  --accent-on:   #04150f;                                   /* 녹색 위에 얹는 글자 */
+  --accent-soft: color-mix(in srgb, var(--accent) 13%, var(--surface));
+  --gold:        var(--c-coin);
+
+  /* 금액 — 한국식(오름 빨강 / 내림 파랑). */
+  --gain: var(--c-red);
+  --loss: var(--c-blue);
+  /* 현금흐름 — 들어오면 녹색 계열, 나가면 주황, 값 없는 것(수수료)은 회색. */
+  --t-buy: var(--c-red); --t-sell: var(--c-blue); --t-div: var(--c-green);
+  --t-dep: var(--c-green-soft); --t-wd: var(--c-orange); --t-fee: #8a8f98; --t-int: var(--c-coin);
 
   /* 그림자 — 바닥에 붙은 것에는 안 준다. 떠 있는 것(메뉴·모달·토스트)에만. */
   --shadow:    none;
@@ -387,19 +396,6 @@ body { margin: 0; }
 .brand small { display: none; }
 .brand-icon { width: 20px; height: 20px; border-radius: var(--r-sm); background: var(--surface-2); flex: none; }
 
-/* 옆 앱으로 가는 문 — 브랜드 옆 작은 아이콘 하나. 이름까지 쓰면 지금 앱과 헷갈린다. */
-.app-switch {
-  margin-left: auto; flex: none;
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; border-radius: var(--r-sm);
-  border: 1px solid transparent; background: transparent; text-decoration: none;
-  transition: background .12s var(--ease), border-color .12s var(--ease);
-}
-.app-switch img { width: 18px; height: 18px; border-radius: 4px; opacity: .55; transition: opacity .12s var(--ease); }
-.app-switch span { display: none; }
-.app-switch:hover { background: var(--surface-2); border-color: var(--line); }
-.app-switch:hover img { opacity: 1; }
-
 .side-nav { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
 .nav-group + .nav-group { margin-top: 14px; }
 .nav-label {
@@ -440,7 +436,7 @@ body { margin: 0; }
 }
 .topbar h1 { margin: 0; font-size: var(--fs-md); font-weight: var(--w-semi); letter-spacing: -.015em; color: var(--ink); }
 /* 넓은 화면에선 브랜드도 앱 전환도 사이드바에 있다 — 상단바의 것은 폰 전용. */
-.topbar .brand-icon, .topbar .app-switch { display: none; }
+.topbar .brand-icon { display: none; }
 .topbar .bar-acts { margin-left: auto; display: flex; align-items: center; gap: var(--sp-2); }
 .head-total { text-align: right; line-height: 1.25; }
 .head-total .v { font-size: var(--fs-sm); font-weight: var(--w-semi); letter-spacing: -.02em; color: var(--ink); }
@@ -598,17 +594,60 @@ details.help .help-body b { color: var(--ink); font-weight: var(--w-semi); }
 .env-seg button.on[data-warn]::after { color: var(--accent-on); }
 
 /* 종목 관리표 — 칸 폭을 표가 정하게 두고, 입력은 칸을 채운다. */
-.sym-row > td { vertical-align: top; }
-.sym-row .smTicker, .sym-row .smDisp { width: 100%; }
-.sym-row td:nth-child(1) { width: 110px; }
-.sym-row td:nth-child(2) { width: 200px; }
-.sym-names { max-width: 420px; white-space: normal; }
-.sym-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+/* ── 종목 관리 ─────────────────────────────────────────────────────
+   읽기가 기본. 입력칸을 늘어놓지 않고, 고칠 줄만 펼친다.
+   한 줄 = 티커 하나. 티커가 없으면 시세가 안 붙으므로 그것부터 눈에 띄게. */
+.sym-bar { flex-wrap: wrap; }
+.sym-bar input[type="search"] { width: 220px; }
+.sym-count { margin-left: auto; font-size: var(--fs-xs); display: flex; align-items: center; gap: var(--sp-3); }
+.sym-count b { color: var(--ink-2); font-weight: var(--w-semi); }
+.sym-count b.warn-ink { color: var(--t-wd); }
+.sym-cache { color: var(--muted); }
+
+.sym-list {
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface); overflow: hidden;
+}
+.sym-item + .sym-item { border-top: 1px solid var(--line); }
+.sym-item.open { background: var(--surface-2); }
+
+.sym-head { display: flex; align-items: center; gap: var(--sp-3); padding: 10px var(--sp-4); min-height: 46px; }
+.sym-main { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.sym-title { font-size: var(--fs-sm); font-weight: var(--w-semi); color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sym-alt { font-size: var(--fs-2xs); color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sym-tk { flex: none; font-variant-numeric: tabular-nums; }
+.sym-head .symEdit { flex: none; }
+
+.sym-edit { padding: 0 var(--sp-4) var(--sp-4); }
+.sym-edit .form-grid { max-width: 620px; }
+.sym-add { margin-bottom: var(--sp-3); }
+
+.sym-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-height: var(--ctl-h); }
 .sym-chip { display: inline-flex; align-items: center; gap: 3px; font-size: var(--fs-2xs);
   background: var(--surface-3); border-radius: var(--r-sm); padding: 3px 5px 3px 8px; color: var(--ink-2); }
-.sym-chip .chipDel { cursor: pointer; color: var(--muted); font-weight: var(--w-semi); padding: 0 2px; }
-.sym-chip .chipDel:hover { color: var(--gain); }
-.chipAdd { width: 104px; height: 26px; font-size: var(--fs-2xs); padding: 0 8px; }
+.sym-chip .chipDel { cursor: pointer; color: var(--muted); font-weight: var(--w-semi);
+  padding: 0 2px; background: none; border: 0; height: auto; font-size: inherit; }
+.sym-chip .chipDel:hover { color: var(--t-wd); }
+.chipAdd { width: 120px; height: 26px; font-size: var(--fs-2xs); padding: 0 8px; }
+
+/* 불러오는 동안 — 도는 원 대신 들어올 줄 모양 그대로 비워 둔다(레이아웃이 안 튄다). */
+.sym-item.skel { display: flex; align-items: center; gap: var(--sp-3); padding: 14px var(--sp-4); }
+.sym-item.skel .sk { height: 10px; border-radius: 4px; background: var(--surface-3); }
+.sym-item.skel .sk-1 { flex: 1; max-width: 260px; }
+.sym-item.skel .sk-2 { width: 54px; }
+@media (prefers-reduced-motion: no-preference) {
+  .sym-item.skel .sk { animation: symPulse 1.4s var(--ease) infinite; }
+  @keyframes symPulse { 0%, 100% { opacity: .5 } 50% { opacity: .9 } }
+}
+
+@media (max-width: 700px) {
+  .sym-count { width: 100%; margin-left: 0; }
+  .sym-bar input[type="search"] { width: 100%; }
+  .sym-head { flex-wrap: wrap; }
+  .sym-edit .form-grid { grid-template-columns: 1fr; }
+}
 
 /* 매매 차트 */
 .tr-chartbox { position: relative; height: 210px; }
@@ -640,7 +679,7 @@ details.help .help-body b { color: var(--ink); font-weight: var(--w-semi); }
 td .sym { color: var(--ink-2); font-weight: var(--w-semi); }
 td .sym .tick { font-weight: var(--w-reg); }
 
-/* 경고 배지 — 예전엔 #b45309(밝은 화면 시절 주황)이 인라인으로 박혀 있었다. */
+/* 경고 배지 — 주황(--c-orange) 한 가지로. 예전엔 인라인 hex가 박혀 있었다. */
 .badge.b-warn { background: color-mix(in srgb, var(--t-wd) 18%, var(--surface)); color: var(--t-wd); }
 
 /* 표·목록에서 반복되던 한 줄짜리 인라인들 */
@@ -834,9 +873,9 @@ tbody tr:hover > td { background: var(--surface-2); }
 .badge.b-TRANSFER, .badge.b-XFER_IN, .badge.b-XFER_OUT, .badge.b-k {
   background: var(--surface-3); color: var(--ink-2); }
 .badge.b-EXCHANGE, .badge.b-FX_IN, .badge.b-FX_OUT {
-  background: color-mix(in srgb, #38a3c4 18%, var(--surface)); color: #6cc6e0; }
+  background: color-mix(in srgb, var(--c-blue) 18%, var(--surface)); color: var(--c-blue); }
 .badge.b-IPO_IN, .badge.b-IPO_OUT, .badge.b-SUBSCRIPTION {
-  background: color-mix(in srgb, var(--t-int) 18%, var(--surface)); color: var(--t-int); }
+  background: color-mix(in srgb, var(--c-orange) 18%, var(--surface)); color: var(--c-orange); }
 .badge.b-dup, .badge.b-rent { background: color-mix(in srgb, var(--t-wd) 18%, var(--surface)); color: var(--t-wd); }
 .badge.b-cat, .badge.b-sale { background: var(--accent-soft); color: var(--accent-ink); }
 .badge.b-jeonse { background: color-mix(in srgb, var(--t-div) 15%, var(--surface)); color: var(--t-div); }
@@ -1008,9 +1047,7 @@ tbody tr:hover > td { background: var(--surface-2); }
   .topbar { padding: 0 var(--sp-3); gap: var(--sp-2); }
   /* 폰에서는 브랜드가 사이드바에 없으니 상단바가 대신 받는다. */
   .topbar .brand-icon { display: block; width: 22px; height: 22px; flex: none; }
-  .topbar .app-switch { display: inline-flex; }
   .topbar h1 { font-size: var(--fs-md); }
-  .topbar .app-switch { width: 32px; height: 32px; }
   .head-total .l { display: none; }
 
   main { padding: var(--sp-4) var(--sp-3) calc(72px + env(safe-area-inset-bottom)); }
