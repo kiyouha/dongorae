@@ -49,7 +49,10 @@ docker compose --profile tools up -d pgadmin               # DB 뷰어
 - **파일 업로드·시세 갱신·종목 별칭·종목DB 갱신·거래내역 초기화·xlsx 내보내기** = 앱 **설정 탭**(admin 전용).
 - KB는 **xlsx** 권장(CSV는 환전·배당·세금 누락).
 - 거래 수정/삭제는 재업로드해도 부활 안 함(tombstone). 파서를 고쳐 기존 데이터에 반영하려면 **초기화 후 재업로드** 필요.
-- 공유폴더는 이 맥의 `./files` (`files/거래내역/import`에 넣으면 cron이 매분 적재).
+- **거래내역 폴더 = 아이클라우드** `~/Library/Mobile Documents/com~apple~CloudDocs/home/금융/거래내역/` — `소유주/계좌명/연도_증권사_계좌번호.csv|xlsx`.
+  넣으면 cron이 매분 적재한다(아이폰 파일앱에서 바로 넣어도 됨). 즉시 적재는 `./manage.sh cli scan-imports`.
+- **내보내기(xlsx)** = `~/Library/Mobile Documents/com~apple~CloudDocs/home/금융/서버 저장/`.
+- 보험 문서 등 나머지 공유폴더는 이 맥의 `./files`.
 
 ## cron (don-scheduler 컨테이너, 자동)
 

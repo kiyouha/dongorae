@@ -8,6 +8,7 @@
 전체 동작. **2026-08-29부터 운영 위치를 NAS → 이 맥(`~/Server/dongorae`)으로 옮겼다.** 접속 `http://localhost:8000`(LAN `http://192.168.0.121:8000`), 로그인 필수 + 가족 승인제.
 - **이관(2026-08-29)**: goraes 모노레포에서 **dongorae + auth-server + gateway만** 떼어내 단독 저장소(github kiyouha/dongorae)로. compose는 include 없는 **단일 `docker-compose.yml`**, 앱 코드가 리포 루트(`app/`, `cli.py`, `Dockerfile`). docgorae·NAS 배포 경로(`manage.sh` tar-over-ssh)·`ops/drive-nudge.sh`는 안 가져옴. **don DB는 빈 상태로 새로 시작**(NAS DB는 아직 NAS에 있음 — `./manage.sh nas-pull`로 복제 가능). 자세히는 Run/verify + DECISIONS 2026-08-29.
 - **기동 검증(2026-08-29 22:56)**: 6개 컨테이너 정상 — 랜딩 `/` 200, 미로그인 `/don/` 302(게이트 동작), `/shared/base.css` 200 text/css, auth `:8001` 200, scheduler cron 기동. 맥의 옛 스택 잔재(goraes-* 9개·auth-server-*·구 dongorae-don-nginx)는 전부 제거(볼륨 `goraes_*`는 보존). paperless는 무관하게 그대로.
+- **거래내역 경로 = 아이클라우드(2026-08-30)**: `IMPORTS_DIR`/`EXPORTS_DIR` env 덮어쓰기를 `app/config.py`에 추가하고, 호스트 `~/Library/Mobile Documents/com~apple~CloudDocs/home/금융`를 `/app/finance`로 마운트(`FINANCE_DIR`). 넣는 곳 `…/거래내역`, 내보내기 `…/서버 저장`. **파일 81개에서 거래 11,621건 적재 완료**(2020-04-12~2026-08-19, 3소유자·24계좌) — 아래 '데이터 전부 비움'은 이걸로 해소됨. 리포의 `data/imports/` 사본은 이제 안 쓰인다.
 - **데이터 전부 비움**: 재사용된 옛 로컬 볼륨에 거래 11,638건(2020-04-12~2026-08-19)·24계좌가 남아 있었으나 **사용자 지시로 폐기**(`down -v`). don/auth DB 모두 0행 — 계좌·거래내역을 처음부터 다시 등록한다.
 - **핵심 전환(P1~P4 완료, 2026-07-18)**: 거래 데이터를 **이중기입 movements 모델**(out 상품→in 상품, 통화도 상품)로 재설계. 대시보드·평가도 movements 기준.
 - **탐색 구조(사이드바 2026-08-20)**: 좌측 사이드바 = 화면 하나. 8개를 3덩이로 묶었다.
@@ -297,14 +298,15 @@ PostgreSQL + FastAPI(gunicorn) + nginx + cron. 서비스: **dongorae**(앱), **d
 - **미국 종목 한글명 티커**: 자동피드(KRX/NASDAQ)에 한글명↔미국티커 매핑 없음 → **관리 탭에서 별칭 등록**(예 코카콜라→KO, AT&T→T. 이미 등록됨). 국내종목은 자동.
 - **업로드계좌 시점잔액 음수 가능**: 개시 예수금·환전분이 movements에 없으면 과거 현금/USD 음수로 보일 수 있음(한계). 수동계좌·조정은 정확.
 - **가족 로그인 = 네이버 앱 '개발중'이면 멤버관리(테스트계정) 등록된 ID만** 로그인 가능. 김숙진 등은 네이버 콘솔 멤버관리 추가 or 검수 필요.
-- **DB가 비어 있음(2026-08-29)** — owners/accounts/transactions/users 전부 0. 첫 네이버 로그인 사용자가 자동 관리자가 되고, 그 뒤 설정 탭에서 계좌·거래내역을 재등록해야 화면이 채워진다. 소유주 파일은 `data/imports/{영한,숙진,휘동}/`·`data/exports/`에 그대로 있다.
+- **auth DB는 여전히 비어 있음** — 첫 네이버 로그인 사용자가 자동 관리자가 된다. don DB는 아이클라우드 폴더에서 11,621건 적재됨(위).
+- **아이클라우드 의존** — 거래내역/내보내기가 iCloud Drive 실폴더다. 파일이 '최적화'로 내려가 있으면(placeholder) 컨테이너가 못 읽고, 동기화가 밀리면 적재도 밀린다. 해당 폴더는 '항상 이 Mac에 유지' 권장.
 - **외부 접속 = 평문 HTTP** — `http://1.240.143.16:9876`(공유기 9876 → 맥 8000, 헤어핀 NAT 동작 확인). NAS의 DDNS+HTTPS(kiyouha.synology.me)는 따라오지 않았다. **공인 IP가 바뀌면 `.env` `AUTH_BASE_URL` + 네이버 콜백을 같이 고쳐야 한다** — DDNS로 옮기면 없어질 문제. 평문이라 `COOKIE_SECURE=0` 유지 필수(HTTPS 앞에 두면 1).
 - **이제 본체 = 이 맥**. Docker Desktop이 떠 있어야 하고, **맥이 잠들면 cron(시세·import 스캔·매매 평가)이 그 시간 건너뜀** → 상시 운영하려면 잠자기 해제. NAS 스택은 아직 남아 있으므로 **이중 가동 주의**(같은 네이버 앱·같은 데이터원본).
 - 변환거래(origin=tx) 수정하면 원본 tx 삭제+수동승격(설계됨) → 재업로드 부활은 tombstone으로 차단(Done 참조). 옛 투자·가계부 탭 뷰는 DOM에 남아있으나 탭 버튼만 제거(msInit 등 안 깨지게).
 - 자산추이 스냅샷 매일 누적돼야 그래프. 부동산 서울만. data.go.kr Accept:*/* 필수.
 
 ## Next action
-**브라우저에서 `http://localhost:8000` → 네이버 로그인**(첫 사용자가 자동 관리자) **→ 설정 탭에서 계좌·거래내역 재등록.**
+**브라우저에서 `http://1.240.143.16:9876`(또는 `http://localhost:8000`) → 네이버 로그인**(첫 사용자가 자동 관리자) **→ 대시보드에 11,621건이 제대로 보이는지 확인.**
 콜백이 안 맞아 로그인이 튕기면 `.env`의 `AUTH_BASE_URL`을 네이버 개발자센터에 등록된 값과 똑같이 맞추고 `docker compose up -d auth-app`.
 
 이후 열린 것:

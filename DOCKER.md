@@ -45,6 +45,7 @@ PostgreSQL + FastAPI(gunicorn/uvicorn) + nginx 게이트웨이 + 인증 서버. 
 | `NAVER_CLIENT_ID/SECRET` | developers.naver.com 발급 |
 | `MOLIT_SERVICE_KEY` | 국토부 실거래가·건축물대장 (data.go.kr) |
 | `KIS_*` | 한국투자증권 자동매매. `KIS_ENV=vts`(모의)가 기본, 실주문은 `KIS_ALLOW_LIVE=1` 필요 |
+| `FINANCE_DIR` | 아이클라우드 금융 폴더(호스트 경로). 컨테이너에 `/app/finance`로 마운트된다 |
 
 현재 설정: `AUTH_BASE_URL=http://1.240.143.16:9876` — 공유기가 **외부 9876 → 192.168.0.121:8000**으로 포워딩하고,
 같은 주소가 네이버 콜백(`/auth/naver/callback`)으로 등록돼 있다. 헤어핀 NAT가 되어 집 안에서도 같은 주소로 들어간다.
@@ -56,9 +57,18 @@ PostgreSQL + FastAPI(gunicorn/uvicorn) + nginx 게이트웨이 + 인증 서버. 
 
 ## 거래내역 넣기
 
-- 앱 **설정 탭 → 파일 업로드** (권장)
-- 또는 `files/거래내역/import/` 에 `소유주_계좌명_증권사_계좌번호[_연도].csv|xlsx` 로 넣으면 cron이 매분 적재
+거래내역은 **아이클라우드 폴더를 직접** 읽고 쓴다(아이폰 파일앱에서 바로 정리 가능).
+
+| 용도 | 맥 경로 | 컨테이너 |
+|---|---|---|
+| 넣는 곳 | `~/Library/Mobile Documents/com~apple~CloudDocs/home/금융/거래내역/` | `/app/finance/거래내역` |
+| 내보내기 | `~/Library/Mobile Documents/com~apple~CloudDocs/home/금융/서버 저장/` | `/app/finance/서버 저장` |
+
+- 구조는 `소유주/계좌명/연도_증권사_계좌번호[(n)].csv\|xlsx` (구 평면 이름도 인식). cron이 매분 감지해 적재
+- 앱 **설정 탭 → 파일 업로드**로 올려도 되고, 그러면 원본이 위 폴더에 백업된다
 - 중복/겹치는 파일은 자동으로 무시된다(멱등)
+- ⚠️ 아이클라우드 "Mac 저장 공간 최적화"가 파일을 내려받지 않은 상태로 두면 컨테이너가 못 읽는다 —
+  이 폴더는 '항상 이 Mac에 유지'로 두는 편이 안전하다
 
 ```bash
 ./manage.sh cli scan-imports        # 즉시 적재

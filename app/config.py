@@ -19,6 +19,13 @@ else:
     EXPORTS_DIR = DATA_DIR / "exports" / "saved"
     INSURANCE_DIR = DATA_DIR / "docs" / "정리됨"
 
+# 개별 경로 덮어쓰기(선택). 아이클라우드처럼 FILES_DIR 트리 밖에 두고 싶을 때 쓴다.
+# 예) IMPORTS_DIR=/app/finance/거래내역  EXPORTS_DIR="/app/finance/서버 저장"
+if os.environ.get("IMPORTS_DIR"):
+    IMPORTS_DIR = Path(os.environ["IMPORTS_DIR"])
+if os.environ.get("EXPORTS_DIR"):
+    EXPORTS_DIR = Path(os.environ["EXPORTS_DIR"])
+
 DATABASE_URL = os.environ.get(
     "DATABASE_URL", "postgresql://don:don@localhost:5432/don"
 )

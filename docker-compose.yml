@@ -37,11 +37,15 @@ services:
       KIS_APPSECRET: ${KIS_APPSECRET:-}
       KIS_ACCOUNT: ${KIS_ACCOUNT:-}
       KIS_ALLOW_LIVE: ${KIS_ALLOW_LIVE:-}
-      FILES_DIR: /app/files             # 거래내역 import/export·보험 문서 공유폴더
+      FILES_DIR: /app/files             # 보험 문서 등 나머지 공유폴더
+      # 거래내역은 아이클라우드(home/금융) 직접 사용 — 아이폰 파일앱에서 바로 넣고 본다.
+      IMPORTS_DIR: /app/finance/거래내역
+      EXPORTS_DIR: /app/finance/서버 저장
       TZ: Asia/Seoul
     volumes:
-      - ./data:/app/data                # 거래내역(inbox)·symbols·로그를 호스트와 공유
+      - ./data:/app/data                # symbols·로그를 호스트와 공유
       - ./files:/app/files              # NAS /volume2/goraes 자리 — 이 맥의 ./files
+      - ${FINANCE_DIR:?FINANCE_DIR 미설정}:/app/finance   # 아이클라우드 home/금융
     depends_on:
       don-db:
         condition: service_healthy
@@ -56,7 +60,9 @@ services:
     environment:
       DATABASE_URL: postgresql://don:don@don-db:5432/don
       MOLIT_SERVICE_KEY: ${MOLIT_SERVICE_KEY:-}
-      FILES_DIR: /app/files             # cron import 스캔이 공유폴더 거래내역/import를 보게
+      FILES_DIR: /app/files
+      IMPORTS_DIR: /app/finance/거래내역   # cron scan-imports가 보는 곳(아이클라우드)
+      EXPORTS_DIR: /app/finance/서버 저장
       KIS_ENV: ${KIS_ENV:-vts}          # cron trade-tick가 실시간 시세/주문 쓰려면 필요
       KIS_APPKEY: ${KIS_APPKEY:-}
       KIS_APPSECRET: ${KIS_APPSECRET:-}
@@ -66,6 +72,7 @@ services:
     volumes:
       - ./data:/app/data
       - ./files:/app/files
+      - ${FINANCE_DIR:?FINANCE_DIR 미설정}:/app/finance
     depends_on:
       don-db:
         condition: service_healthy
