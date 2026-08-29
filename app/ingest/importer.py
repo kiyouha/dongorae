@@ -157,9 +157,10 @@ def scan_imports(conn, imports_dir):
     try:
         mpath = imports_dir / ".manifest.json"
         try:
-            manifest = json.loads(mpath.read_text())
+            before_manifest = mpath.read_text()
+            manifest = json.loads(before_manifest)
         except Exception:
-            manifest = {}
+            before_manifest, manifest = None, {}
         results, total_inserted = [], 0
         files = _import_files(imports_dir)
         for rel, f, meta in files:
@@ -186,8 +187,12 @@ def scan_imports(conn, imports_dir):
             del manifest[k]   # 삭제된 파일 정리
         if total_inserted:
             movements.rebuild_movements(conn)
+        # 바뀐 게 없으면 매니페스트도 다시 쓰지 않는다. import 폴더가 아이클라우드라
+        # 매분 같은 내용으로 덮어쓰면 하루 1,440번 동기화가 돈다.
         try:
-            mpath.write_text(json.dumps(manifest, ensure_ascii=False))
+            dumped = json.dumps(manifest, ensure_ascii=False)
+            if dumped != before_manifest:
+                mpath.write_text(dumped)
         except Exception:
             pass
         conn.commit()

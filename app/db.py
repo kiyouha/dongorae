@@ -58,6 +58,12 @@ SCHEMA = [
     )""",
     "CREATE INDEX IF NOT EXISTS idx_tx_account ON transactions(account_id)",
     "CREATE INDEX IF NOT EXISTS idx_tx_date ON transactions(trade_date)",
+    # movements가 대시보드·종목·거래내역·평가의 주 조회 테이블인데 인덱스가 없었다.
+    "CREATE INDEX IF NOT EXISTS idx_mv_date ON movements(trade_date)",
+    "CREATE INDEX IF NOT EXISTS idx_mv_out_acct ON movements(out_account_id)",
+    "CREATE INDEX IF NOT EXISTS idx_mv_in_acct ON movements(in_account_id)",
+    "CREATE INDEX IF NOT EXISTS idx_mv_out_prod ON movements(out_product_id)",
+    "CREATE INDEX IF NOT EXISTS idx_mv_in_prod ON movements(in_product_id)",
     # 자산 추이 스냅샷 (일별). scope = 소유자명 또는 'TOTAL'.
     """CREATE TABLE IF NOT EXISTS snapshots (
         as_of            TEXT NOT NULL,
@@ -287,52 +293,8 @@ SCHEMA = [
         dedupe_hash TEXT PRIMARY KEY
     )""",
     # 문서정리(보험 등): 업로드 → OCR/텍스트추출 → 키워드 분류 → 보관.
-    """CREATE TABLE IF NOT EXISTS documents (
-        id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-        owner       TEXT,
-        orig_name   TEXT NOT NULL,          -- 업로드 원본 파일명
-        stored_path TEXT NOT NULL,          -- 서버 저장 경로(data/docs/)
-        mime        TEXT,
-        category    TEXT,                   -- 분류 결과(보험증권/약관/청구·보상/갱신·납입안내/기타)
-        insurer     TEXT,                   -- 보험사(추출)
-        product     TEXT,                   -- 상품명(추출)
-        policy_no   TEXT,                   -- 증권번호(추출)
-        doc_date    TEXT,                   -- 계약일/발행일(추출)
-        expiry_date TEXT,                   -- 만기일(추출)
-        text        TEXT,                   -- 추출 전체 텍스트(검색·조회용)
-        ocr         BOOLEAN DEFAULT FALSE,  -- OCR 사용 여부
-        uploaded_at TEXT NOT NULL,
-        content_hash TEXT UNIQUE,           -- 동일 파일 재업로드 방지
-        filed_path  TEXT                    -- 공유폴더 카테고리별 정리 사본 경로(있으면)
-    )""",
-    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS filed_path TEXT",
     # 수동 검토 방식: import 드롭 → 검토대기(pending) → 웹 입력 → 정리(filed)·표준 파일명
-    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'pending'",
-    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS hospital TEXT",     # 병원/약국명
-    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS doc_type TEXT",     # 문서종류(진료비영수증 등)
-    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS diagnosis TEXT",    # 병명(선택)
-    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS amount BIGINT",     # 금액(영수증)
-    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS date_end TEXT",     # 진료기간 종료(기간 영수증)
-    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS person TEXT",       # 대상자(가족 중 누구 진료)
-    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS claim_group TEXT",  # 청구 묶음(사용자 선택으로 결정, 기간은 파생)
-    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS claimed BOOLEAN NOT NULL DEFAULT FALSE",  # 청구 완료 여부
-    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS claim_ins BIGINT", # 청구한 보험 id
-    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS sort_order INTEGER",  # 묶음 내 수동 정렬(작을수록 앞, 같은 종류 여러 장 (01)(02) 순서)
-    """CREATE TABLE IF NOT EXISTS insurance (
-        id       BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-        name     TEXT NOT NULL,           -- 별칭(예: 삼성 실손)
-        insurer  TEXT,                    -- 보험사
-        kind     TEXT,                    -- 종류(실손·자동차·상해 등)
-        persons  TEXT,                    -- 대상자 목록(가족명 콤마구분, 자동차보험=여러명)
-        note     TEXT
-    )""",
     # 청구 완료 기록: 문서 × 보험사(동일 병명을 여러 보험에 청구 가능). 존재=청구함.
-    """CREATE TABLE IF NOT EXISTS doc_claims (
-        doc_id       BIGINT NOT NULL,
-        insurance_id BIGINT NOT NULL,
-        PRIMARY KEY (doc_id, insurance_id)
-    )""",
-    "CREATE INDEX IF NOT EXISTS idx_docs_status ON documents(status)",
     # 가족(대상자) 명단 — 로그인 안 하는 가족(부모·형제 등)도 등록. 대상자·자산소유자 선택 소스.
     """CREATE TABLE IF NOT EXISTS family (
         id       BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -347,10 +309,20 @@ def connect(dsn=None):
     return psycopg.connect(dsn or DATABASE_URL, row_factory=dict_row)
 
 
-def init_schema(conn):
+_schema_ready = False
+
+
+def init_schema(conn, force=False):
+    """스키마를 맞춘다. 프로세스당 한 번이면 충분하다.
+    ALTER TABLE ... ADD COLUMN IF NOT EXISTS 는 컬럼이 이미 있어도 ACCESS EXCLUSIVE 락을
+    잡는다. 이걸 요청마다 94번 돌리던 탓에 백필·크론과 락 경합(데드락)이 났다."""
+    global _schema_ready
+    if _schema_ready and not force:
+        return
     for stmt in SCHEMA:
         conn.execute(stmt)
     conn.commit()
+    _schema_ready = True
 
 
 def get_or_create_owner(conn, name):

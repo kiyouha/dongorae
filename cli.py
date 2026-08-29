@@ -72,15 +72,6 @@ def cmd_scan_imports(args):
           f"({len(out['results'])} changed file(s))")
 
 
-def cmd_scan_docs(args):
-    from app import docs
-    conn = db.connect()
-    db.init_schema(conn)
-    out = docs.scan_inbox(conn)
-    if out["scanned"]:
-        print(f"scan-docs: {out['added']} added, {out['skipped']} skipped ({out['scanned']} scanned)")
-
-
 def cmd_load_prices(args):
     conn = db.connect()
     db.init_schema(conn)
@@ -247,8 +238,6 @@ def main(argv=None):
     psi.add_argument("--dir", default=str(IMPORTS_DIR))
     psi.set_defaults(func=cmd_scan_imports)
 
-    sub.add_parser("scan-docs", help="보험/import 폴더 스캔 문서 자동 OCR·분류·정리").set_defaults(
-        func=cmd_scan_docs)
 
     pp = sub.add_parser("load-prices")
     pp.add_argument("--file", required=True)

@@ -243,6 +243,11 @@ def save_snapshot(conn, as_of=None):
     t = port["total"]
     rows.append(("TOTAL", t["market_value_krw"], t["cash_krw"], total_re,
                  t["market_value_krw"] + t["cash_krw"] + total_re))
+    # 값 하나라도 NaN이면 그 줄은 남기지 않는다. 한 번 들어간 NaN이 추이 API를
+    # 통째로 500으로 만들고(round(NaN) 불가), 나중에 원인을 찾기 어렵다.
+    import math
+    ok = lambda *vs: all(isinstance(v, (int, float)) and math.isfinite(v) for v in vs)
+    rows = [r for r in rows if ok(*r[1:])]
     for scope, mv, cash, re_v, tot in rows:
         conn.execute(
             """INSERT INTO snapshots(as_of, scope, market_value_krw, cash_krw, realestate_krw, total_krw)

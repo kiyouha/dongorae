@@ -5,7 +5,6 @@ import json
 import os
 import secrets
 import urllib.request
-import zipfile
 from pathlib import Path
 from typing import List, Optional
 
@@ -14,7 +13,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import config, db, docs, kis, ledger, movements, trading, valuation
+from . import config, db, kis, ledger, movements, trading, valuation
 from .realestate.seoul import SEOUL_GU
 
 app = FastAPI(title="자산현황")
@@ -374,146 +373,6 @@ _DOC_COLS = ("id, orig_name, mime, status, category, person, hospital, doc_type,
              "insurer, policy_no, expiry_date, uploaded_at")
 
 
-@app.get("/api/docs")
-def api_docs_list():
-    """검토대기(pending) + 정리됨(filed) 리스트 + 입력 보조(병원 자동완성·문서종류)."""
-    with _conn() as conn:
-        rows = conn.execute(
-            f"SELECT {_DOC_COLS} FROM documents ORDER BY doc_date DESC NULLS LAST, id DESC").fetchall()
-        hosps = [r["hospital"] for r in conn.execute(
-            "SELECT DISTINCT hospital FROM documents WHERE hospital IS NOT NULL AND hospital <> '' ORDER BY hospital")]
-        persons = [r["p"] for r in conn.execute(
-            """SELECT name AS p FROM family
-               UNION SELECT person FROM documents WHERE person IS NOT NULL AND person <> ''
-               UNION SELECT name FROM owners ORDER BY p""")]
-        ins = conn.execute("SELECT id, name, insurer, kind, persons FROM insurance ORDER BY id").fetchall()
-        cl = {}
-        for r in conn.execute("SELECT doc_id, insurance_id FROM doc_claims"):
-            cl.setdefault(r["doc_id"], []).append(r["insurance_id"])
-    for r in rows:
-        r["claims"] = cl.get(r["id"], [])
-    pending = [r for r in rows if r["status"] == "pending"]
-    filed = [r for r in rows if r["status"] == "filed"]
-    return {"pending": pending, "filed": filed,
-            "doc_types": docs.DOC_TYPES, "amount_types": docs.AMOUNT_TYPES,
-            "payment_types": docs.PAYMENT_TYPES, "claim_order": docs.CLAIM_ORDER,
-            "doc_groups": [{"cat": c, "types": ts} for c, ts in docs.DOC_GROUPS],
-            "hospitals": hosps, "persons": persons, "insurances": ins}
-
-
-@app.get("/api/docs/{did}/file")
-def api_doc_file(did: int):
-    import mimetypes
-    with _conn() as conn:
-        r = conn.execute("SELECT stored_path, orig_name, mime FROM documents WHERE id = %s", (did,)).fetchone()
-    if not r or not Path(r["stored_path"]).exists():
-        return JSONResponse({"error": "not found"}, status_code=404)
-    mime = r["mime"] or mimetypes.guess_type(r["stored_path"])[0] or "application/octet-stream"
-    # filename= 안 줌 → Content-Disposition 첨부 강제 안 함 → 브라우저 인라인 표시·<img> 임베드 가능
-    return FileResponse(r["stored_path"], media_type=mime)
-
-
-class RotateIn(BaseModel):
-    deg: int = 90                    # >0=시계방향(90·180·270). OSD가 못 잡은 것 수동 교정용.
-
-
-@app.post("/api/docs/{did}/rotate")
-def api_doc_rotate(did: int, body: RotateIn, request: Request):
-    """문서 이미지 수동 회전(원본·정리본 사본 갱신). deg>0=시계방향."""
-    if not _current_user(request):
-        return JSONResponse({"error": "로그인이 필요합니다."}, status_code=401)
-    from PIL import Image
-    with _conn() as conn:
-        r = conn.execute("SELECT stored_path, filed_path FROM documents WHERE id=%s", (did,)).fetchone()
-        if not r or not Path(r["stored_path"]).exists():
-            return JSONResponse({"error": "not found"}, status_code=404)
-        p, ext = r["stored_path"], Path(r["stored_path"]).suffix.lower()
-        if ext not in (".jpg", ".jpeg", ".png"):
-            return {"error": "이미지 파일만 회전할 수 있어요."}
-        try:
-            img = Image.open(p)
-            if img.mode not in ("RGB", "L"):
-                img = img.convert("RGB")
-            img.rotate(-body.deg, expand=True).save(p, format=("PNG" if ext == ".png" else "JPEG"), quality=90)
-            if r["filed_path"] and Path(r["filed_path"]).exists():
-                Path(r["filed_path"]).write_bytes(Path(p).read_bytes())   # 정리본 사본도 갱신(전체 재빌드 X)
-        except Exception as e:
-            return {"error": str(e)}
-    return {"ok": True}
-
-
-@app.post("/api/docs/upload")
-async def api_doc_upload(request: Request, file: UploadFile = File(...)):
-    """웹 업로드 → 검토대기 등록(OCR 없음). 동일 파일은 스킵."""
-    if not _current_user(request):
-        return JSONResponse({"error": "로그인이 필요합니다."}, status_code=401)
-    raw = await file.read()
-    if not raw:
-        return JSONResponse({"error": "빈 파일"}, status_code=400)
-    with _conn() as conn:
-        return docs.register(conn, raw, file.filename, file.content_type or "")
-
-
-@app.post("/api/docs/scan")
-def api_docs_scan(request: Request):
-    """보험/import 폴더의 새 파일을 검토대기로 등록(자동은 cron 매분)."""
-    if not _current_user(request):
-        return JSONResponse({"error": "로그인이 필요합니다."}, status_code=401)
-    with _conn() as conn:
-        return docs.scan_inbox(conn)
-
-
-class DocReview(BaseModel):
-    person: Optional[str] = None
-    hospital: Optional[str] = None
-    doc_type: Optional[str] = None
-    diagnosis: Optional[str] = None
-    amount: Optional[int] = None
-    doc_date: Optional[str] = None
-    date_end: Optional[str] = None
-    claim_group: Optional[str] = None
-
-
-@app.patch("/api/docs/{did}")
-def api_doc_review(did: int, body: DocReview, request: Request):
-    """검토 입력 저장 → 표준 파일명으로 정리(filed). 병원·문서종류·금액·날짜."""
-    if not _current_user(request):
-        return JSONResponse({"error": "로그인이 필요합니다."}, status_code=401)
-    with _conn() as conn:
-        return docs.finalize(conn, did, body.dict())
-
-
-@app.delete("/api/docs/{did}")
-def api_doc_delete(did: int, request: Request):
-    if not _current_user(request):
-        return JSONResponse({"error": "로그인이 필요합니다."}, status_code=401)
-    with _conn() as conn:
-        r = conn.execute("SELECT stored_path, filed_path FROM documents WHERE id = %s", (did,)).fetchone()
-        if r:
-            for p in (r["stored_path"], r.get("filed_path")):
-                if p:
-                    try:
-                        Path(p).unlink(missing_ok=True)
-                    except Exception:
-                        pass
-            conn.execute("DELETE FROM documents WHERE id = %s", (did,))
-            docs.export_filed(conn)   # 삭제 반영 → 청구묶음별 폴더 재빌드
-    return {"ok": True}
-
-
-# ── 가족(대상자) 관리: 가족 명단(비로그인 포함) + 로그인 사용자(auth 승인상태) ──────
-class FamilyIn(BaseModel):
-    name: str
-    relation: Optional[str] = None
-    note: Optional[str] = None
-
-
-class FamilyUserAction(BaseModel):
-    id: int
-    op: str                       # approve | revoke | owner | delete
-    owner: Optional[str] = None
-
-
 @app.get("/api/family")
 def api_family(request: Request):
     """가족 명단 + 로그인 사용자(auth). 관리자 전용. 최초엔 owners로 가족 시드."""
@@ -524,13 +383,12 @@ def api_family(request: Request):
             conn.execute("INSERT INTO family(name) SELECT DISTINCT name FROM owners ON CONFLICT DO NOTHING")
             conn.commit()
         fam = conn.execute("SELECT id, name, relation, note FROM family ORDER BY id").fetchall()
-        ins = conn.execute("SELECT id, name, insurer, kind, persons, note FROM insurance ORDER BY id").fetchall()
         owners = conn.execute("SELECT name, include_totals FROM owners ORDER BY name").fetchall()
     try:
         users = _auth_get("/api/users", request).get("users", [])
     except Exception:
         users = []
-    return {"family": fam, "users": users, "insurances": ins, "owners": owners}
+    return {"family": fam, "users": users, "owners": owners}
 
 
 class OwnerInclude(BaseModel):
@@ -547,6 +405,12 @@ def api_owner_include(body: OwnerInclude, request: Request):
         conn.execute("UPDATE owners SET include_totals=%s WHERE name=%s", (bool(body.include), body.owner))
         conn.commit()
     return {"ok": True}
+
+
+class FamilyIn(BaseModel):
+    name: str
+    relation: Optional[str] = None
+    note: Optional[str] = None
 
 
 @app.post("/api/family")
@@ -585,6 +449,12 @@ def api_family_del(fid: int, request: Request):
     return {"ok": True}
 
 
+class FamilyUserAction(BaseModel):
+    id: int
+    op: str                       # approve | revoke | owner | delete
+    owner: Optional[str] = None
+
+
 @app.post("/api/family/user-action")
 def api_family_user_action(body: FamilyUserAction, request: Request):
     """로그인 사용자 승인/해제/소유자지정/삭제 → auth-server 프록시."""
@@ -594,162 +464,6 @@ def api_family_user_action(body: FamilyUserAction, request: Request):
         return _auth_post("/api/users/action", body.dict(), request)
     except Exception as e:
         return {"error": str(e)}
-
-
-# ── 가입 보험 + 청구 체크(누락 방지) ─────────────────────────────
-class InsuranceIn(BaseModel):
-    name: str
-    insurer: Optional[str] = None
-    kind: Optional[str] = None
-    persons: Optional[str] = None   # 대상자 가족명 콤마구분(자동차보험=여러명)
-    note: Optional[str] = None
-
-
-@app.post("/api/insurance")
-def api_insurance_add(body: InsuranceIn, request: Request):
-    if not _require_admin(request):
-        return JSONResponse({"error": "관리자 전용"}, status_code=403)
-    name = (body.name or "").strip()
-    if not name:
-        return JSONResponse({"error": "보험 이름을 입력하세요"}, status_code=400)
-    with _conn() as conn:
-        conn.execute("INSERT INTO insurance(name, insurer, kind, persons, note) VALUES(%s,%s,%s,%s,%s)",
-                     (name, body.insurer, body.kind, body.persons, body.note))
-        conn.commit()
-    return {"ok": True}
-
-
-@app.patch("/api/insurance/{iid}")
-def api_insurance_edit(iid: int, body: InsuranceIn, request: Request):
-    if not _require_admin(request):
-        return JSONResponse({"error": "관리자 전용"}, status_code=403)
-    with _conn() as conn:
-        conn.execute("UPDATE insurance SET name=%s, insurer=%s, kind=%s, persons=%s, note=%s WHERE id=%s",
-                     ((body.name or "").strip(), body.insurer, body.kind, body.persons, body.note, iid))
-        conn.commit()
-    return {"ok": True}
-
-
-@app.delete("/api/insurance/{iid}")
-def api_insurance_del(iid: int, request: Request):
-    if not _require_admin(request):
-        return JSONResponse({"error": "관리자 전용"}, status_code=403)
-    with _conn() as conn:
-        conn.execute("DELETE FROM insurance WHERE id=%s", (iid,))
-        conn.commit()
-    return {"ok": True}
-
-
-class RegroupIn(BaseModel):
-    ids: list
-    claim_group: str
-    person: Optional[str] = None
-    hospital: Optional[str] = None
-    diagnosis: Optional[str] = None
-    apply_fields: bool = False        # true=합치기: 대상자·병원·병명도 묶음 값으로 통일(분리는 false)
-
-
-@app.post("/api/docs/regroup")
-def api_docs_regroup(body: RegroupIn, request: Request):
-    """문서들을 한 청구 묶음(claim_group)으로 이동/합치기. apply_fields면 대상자·병원·병명도 통일."""
-    if not _current_user(request):
-        return JSONResponse({"error": "로그인이 필요합니다."}, status_code=401)
-    if not body.ids or not body.claim_group:
-        return {"ok": True}
-    ids = [int(i) for i in body.ids]
-    with _conn() as conn:
-        conn.execute("UPDATE documents SET claim_group=%s WHERE id = ANY(%s)", (body.claim_group, ids))
-        if body.apply_fields:   # 합친 문서들이 상위(묶음) 대상자·병원·병명을 따라가도록 통일
-            conn.execute("UPDATE documents SET person=%s, hospital=%s, diagnosis=%s WHERE id = ANY(%s)",
-                         (body.person, body.hospital, body.diagnosis, ids))
-        docs.export_filed(conn)   # 묶음 변경 → 청구묶음별 폴더 재빌드
-    return {"ok": True}
-
-
-class DocOrderIn(BaseModel):
-    ids: list                       # 원하는 순서대로의 문서 id
-
-
-@app.post("/api/docs/order")
-def api_docs_order(body: DocOrderIn, request: Request):
-    """묶음 내 문서 수동 정렬. ids 순서대로 sort_order=1..N 부여 후 재정리(파일명 (01)(02) 반영)."""
-    if not _current_user(request):
-        return JSONResponse({"error": "로그인이 필요합니다."}, status_code=401)
-    ids = [int(i) for i in (body.ids or [])]
-    if not ids:
-        return {"ok": True}
-    with _conn() as conn:
-        for pos, did in enumerate(ids, 1):
-            conn.execute("UPDATE documents SET sort_order=%s WHERE id=%s", (pos, did))
-        docs.export_filed(conn)
-    return {"ok": True}
-
-
-@app.post("/api/docs/export")
-def api_docs_export(request: Request):
-    """정리된 문서를 청구묶음별 폴더(보험/export/대상자_병원_병명_기간/)로 재빌드. 관리자 전용."""
-    if not _require_admin(request):
-        return JSONResponse({"error": "관리자 전용"}, status_code=403)
-    with _conn() as conn:
-        return docs.export_filed(conn)
-
-
-@app.get("/api/docs/zip")
-def api_docs_zip(request: Request, ids: str, name: str = ""):
-    """묶음 문서들을 zip으로 다운로드(청구 시 한 번에 첨부). name=대상자_병원_병명_기간."""
-    if not _current_user(request):
-        return JSONResponse({"error": "로그인이 필요합니다."}, status_code=401)
-    id_list = [int(x) for x in ids.split(",") if x.strip().isdigit()]
-    if not id_list:
-        return JSONResponse({"error": "no ids"}, status_code=400)
-    with _conn() as conn:
-        rows = conn.execute("SELECT orig_name, stored_path, filed_path FROM documents WHERE id = ANY(%s)",
-                            (id_list,)).fetchall()
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
-        seen = set()
-        for r in rows:
-            fp = r.get("filed_path")
-            path = fp if (fp and Path(fp).exists()) else r["stored_path"]
-            if not path or not Path(path).exists():
-                continue
-            arc = Path(fp).name if fp else (r["orig_name"] or Path(path).name)
-            base, i = arc, 1
-            while arc in seen:
-                p = Path(base)
-                arc = f"{p.stem}_{i}{p.suffix}"
-                i += 1
-            seen.add(arc)
-            z.write(path, arcname=arc)
-    from urllib.parse import quote
-    fname = "".join(c for c in (name or "청구서류") if c not in '/\\:*?"<>|') + ".zip"
-    return Response(content=buf.getvalue(), media_type="application/zip",
-                    headers={"Content-Disposition": f"attachment; filename=\"claim_docs.zip\"; filename*=UTF-8''{quote(fname)}"})
-
-
-class ClaimIn(BaseModel):
-    ids: list
-    insurance_id: int
-    claimed: bool = True
-
-
-@app.post("/api/docs/claim")
-def api_docs_claim(body: ClaimIn, request: Request):
-    """문서들을 특정 보험사에 청구완료/해제. 동일 문서를 여러 보험사에 청구 가능(누락 방지)."""
-    if not _current_user(request):
-        return JSONResponse({"error": "로그인이 필요합니다."}, status_code=401)
-    if not body.ids or not body.insurance_id:
-        return {"ok": True}
-    with _conn() as conn:
-        if body.claimed:
-            for i in body.ids:
-                conn.execute("INSERT INTO doc_claims(doc_id, insurance_id) VALUES(%s,%s) ON CONFLICT DO NOTHING",
-                             (i, body.insurance_id))
-        else:
-            conn.execute("DELETE FROM doc_claims WHERE insurance_id=%s AND doc_id = ANY(%s)",
-                         (body.insurance_id, list(body.ids)))
-        conn.commit()
-    return {"ok": True}
 
 
 @app.get("/api/portfolio")
@@ -1875,97 +1589,6 @@ def api_movements_meta(account_id: str = ""):
     return {"owners": owners, "accounts": accounts, "kinds": kinds, "months": months, "brokers": brokers}
 
 
-def _manual_hash(account_id, d):
-    """수동 입력/수정 거래의 고유 dedupe_hash(값 기반 + :m:난수 → 충돌 없음, 파일 재업로드와 무관)."""
-    raw = "|".join(str(x) for x in (
-        account_id, d.get("trade_date"), d.get("type"), d.get("symbol") or "",
-        d.get("quantity") or 0, d.get("price") or 0, d.get("amount") or 0,
-        d.get("fee") or 0, d.get("tax") or 0, d.get("note") or ""))
-    return hashlib.sha1(raw.encode("utf-8")).hexdigest() + ":m:" + secrets.token_hex(4)
-
-
-class TxIn(BaseModel):
-    account_id: int
-    trade_date: str
-    type: str
-    symbol: Optional[str] = None
-    name: Optional[str] = None
-    market: Optional[str] = None
-    currency: str = "KRW"
-    quantity: float = 0
-    price: float = 0
-    amount: float = 0
-    fee: float = 0
-    tax: float = 0
-
-
-@app.post("/api/tx")
-def api_tx_create(item: TxIn):
-    """수동 거래(체결) 추가."""
-    d = item.dict()
-    d["type"] = (d["type"] or "").upper()
-    d["symbol"] = (d.get("symbol") or d.get("name") or "").strip()
-    d["name"] = (d.get("name") or d["symbol"]).strip()
-    d["currency"] = (d.get("currency") or "KRW").upper()
-    with _conn() as conn:
-        db.init_schema(conn)
-        row = conn.execute(
-            """INSERT INTO transactions
-               (account_id, trade_date, type, symbol, name, market, currency,
-                quantity, price, amount, fee, tax, fx_rate, note, source, src_row, dedupe_hash)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,1,'',%s,NULL,%s) RETURNING id""",
-            (d["account_id"], d["trade_date"], d["type"], d["symbol"], d["name"],
-             d.get("market") or "", d["currency"], d["quantity"], d["price"], d["amount"],
-             d["fee"], d["tax"], "수동", _manual_hash(d["account_id"], d))).fetchone()
-        conn.commit()
-        movements.rebuild_movements(conn)
-    return {"id": row["id"]}
-
-
-class TxPatch(BaseModel):
-    trade_date: Optional[str] = None
-    type: Optional[str] = None
-    symbol: Optional[str] = None
-    name: Optional[str] = None
-    currency: Optional[str] = None
-    quantity: Optional[float] = None
-    price: Optional[float] = None
-    amount: Optional[float] = None
-    fee: Optional[float] = None
-    tax: Optional[float] = None
-
-
-@app.patch("/api/tx/{tid}")
-def api_tx_update(tid: int, item: TxPatch):
-    """체결 수정(세부). 값이 바뀌면 dedupe_hash 재계산(고유 난수 → 충돌 없음)."""
-    fields = {k: v for k, v in item.dict().items() if v is not None}
-    with _conn() as conn:
-        cur = conn.execute("SELECT * FROM transactions WHERE id = %s", (tid,)).fetchone()
-        if not cur:
-            return JSONResponse({"error": "not found"}, status_code=404)
-        if "type" in fields:
-            fields["type"] = (fields["type"] or "").upper()
-        merged = dict(cur); merged.update(fields)
-        sets = ", ".join(f"{k} = %s" for k in fields)
-        params = list(fields.values())
-        if sets:
-            sets += ", "
-        sets += "dedupe_hash = %s"
-        params.append(_manual_hash(merged["account_id"], merged))
-        params.append(tid)
-        conn.execute(f"UPDATE transactions SET {sets} WHERE id = %s", params)
-        conn.commit()
-        movements.rebuild_movements(conn)
-    return {"updated": tid}
-
-
-@app.delete("/api/tx/{tid}")
-def api_tx_delete(tid: int):
-    with _conn() as conn:
-        conn.execute("DELETE FROM transactions WHERE id = %s", (tid,))
-        conn.commit()
-        movements.rebuild_movements(conn)
-    return {"deleted": tid}
 
 
 class AccountIn(BaseModel):
@@ -2124,14 +1747,6 @@ def _upload_diag(path):
     return out
 
 
-@app.post("/api/sync")
-def api_sync():
-    from .ingest.importer import scan_inbox
-    with _conn() as conn:
-        db.init_schema(conn)
-        return {"results": scan_inbox(conn, config.INBOX_DIR)}
-
-
 @app.post("/api/imports/scan")
 def api_imports_scan(request: Request):
     """imports 폴더 즉시 스캔(관리자). 크론(매분)과 동일 로직 — advisory lock으로 중복 방지."""
@@ -2144,7 +1759,9 @@ def api_imports_scan(request: Request):
 
 
 @app.post("/api/refresh-prices")
-def api_refresh_prices():
+def api_refresh_prices(request: Request):
+    if not _require_admin(request):
+        return JSONResponse({"error": "관리자 전용"}, status_code=403)
     from .prices import fdr
     with _conn() as conn:
         return fdr.refresh(conn)
@@ -2247,7 +1864,9 @@ def api_income_monthly(owners: str = None):
 
 
 @app.post("/api/snapshot")
-def api_snapshot():
+def api_snapshot(request: Request):
+    if not _require_admin(request):
+        return JSONResponse({"error": "관리자 전용"}, status_code=403)
     with _conn() as conn:
         db.init_schema(conn)
         return valuation.save_snapshot(conn)
@@ -2366,7 +1985,9 @@ def _relink_loans(conn, owned_id: int, loan_ids):
 
 
 @app.post("/api/owned-assets")
-def api_owned_add(item: OwnedIn):
+def api_owned_add(item: OwnedIn, request: Request):
+    if not _require_admin(request):
+        return JSONResponse({"error": "관리자 전용"}, status_code=403)
     with _conn() as conn:
         db.init_schema(conn)
         row = conn.execute(
@@ -2383,7 +2004,9 @@ def api_owned_add(item: OwnedIn):
 
 
 @app.patch("/api/owned-assets/{item_id}")
-def api_owned_edit(item_id: int, item: OwnedIn):
+def api_owned_edit(item_id: int, item: OwnedIn, request: Request):
+    if not _require_admin(request):
+        return JSONResponse({"error": "관리자 전용"}, status_code=403)
     with _conn() as conn:
         db.init_schema(conn)
         conn.execute(
@@ -2401,7 +2024,9 @@ def api_owned_edit(item_id: int, item: OwnedIn):
 
 
 @app.delete("/api/owned-assets/{item_id}")
-def api_owned_del(item_id: int):
+def api_owned_del(item_id: int, request: Request):
+    if not _require_admin(request):
+        return JSONResponse({"error": "관리자 전용"}, status_code=403)
     with _conn() as conn:
         conn.execute("DELETE FROM owned_assets WHERE id = %s", (item_id,))
         conn.commit()
@@ -2448,7 +2073,9 @@ def api_macro():
 
 
 @app.post("/api/macro-refresh")
-def api_macro_refresh():
+def api_macro_refresh(request: Request):
+    if not _require_admin(request):
+        return JSONResponse({"error": "관리자 전용"}, status_code=403)
     from . import macro
     with _conn() as conn:
         db.init_schema(conn)
@@ -2658,7 +2285,9 @@ def re_watchlist_del(item_id: int):
 
 
 @app.post("/api/re/sync")
-def re_sync(months: int = 1, kinds: str = "매매,전월세"):
+def re_sync(request: Request, months: int = 1, kinds: str = "매매,전월세"):
+    if not _require_admin(request):
+        return JSONResponse({"error": "관리자 전용"}, status_code=403)
     # 버튼 수동 갱신은 최근 1개월만(요청 타임아웃 이내). 전체 백필은 cron(cli re-sync)이 담당.
     from .realestate import molit
     ks = tuple(k for k in kinds.split(",") if k.strip()) or ("매매",)
@@ -2667,15 +2296,3 @@ def re_sync(months: int = 1, kinds: str = "매매,전월세"):
         return molit.sync_seoul(conn, months=months, kinds=ks)
 
 
-@app.post("/api/re/bldg-map")
-def re_bldg_map():
-    from .realestate import bldg
-    return {"dong_count": len(bldg.build_bjdong_map())}
-
-
-@app.post("/api/re/bldg-sync")
-def re_bldg_sync(limit: Optional[int] = None):
-    from .realestate import bldg
-    with _conn() as conn:
-        db.init_schema(conn)
-        return bldg.sync_buildings(conn, limit=limit)

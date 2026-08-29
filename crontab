@@ -2,8 +2,6 @@
 PATH=/usr/local/bin:/usr/bin:/bin
 # 매분: 거래내역 import 폴더 변경 감지 자동 적재(소유주_계좌명_증권사_계좌번호_연도.csv|xlsx).
 * * * * * cd /app && python cli.py scan-imports >> /app/data/imports.log 2>&1 || true
-# 매분: 보험/import 폴더의 새 파일을 검토대기로 등록(사용자가 웹에서 검토·정리).
-* * * * * cd /app && python cli.py scan-docs >> /app/data/docs.log 2>&1 || true
 # 매일 07:00 (KST): 시세 갱신 + 순자산 스냅샷. 거래내역은 웹 업로드 또는 imports 폴더로 적재.
 0 7 * * * cd /app && python cli.py refresh-prices >> /app/data/refresh.log 2>&1 && python cli.py snapshot >> /app/data/refresh.log 2>&1
 # 매일 07:20: 거시경제 지표 갱신.

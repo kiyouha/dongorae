@@ -12,6 +12,13 @@ import csv
 from datetime import date
 from pathlib import Path
 
+
+def _last_close(df):
+    """값이 있는 마지막 종가. FDR은 미국 종목에 '아직 값 없는 오늘'을 한 줄 붙여 주는데
+    그대로 iloc[-1]을 쓰면 NaN이 나온다(국내는 안 붙어서 오래 안 드러났다)."""
+    s = df["Close"].dropna()
+    return float(s.iloc[-1]) if len(s) else None
+
 from ..config import SYMBOLS_CSV
 from ..instruments import is_cash_equivalent, normalize_name
 from . import base
@@ -67,7 +74,7 @@ def refresh(conn, symbols_csv=SYMBOLS_CSV):
     fx = {}
     for ccy in {r["currency"] for r in rows if r["currency"] and r["currency"] != "KRW"} | {"USD"}:
         try:
-            fx[ccy] = float(fdr.DataReader(f"{ccy}/KRW")["Close"].iloc[-1])
+            fx[ccy] = _last_close(fdr.DataReader(f"{ccy}/KRW"))
             base.upsert_price(conn, base.fx_key(ccy), fx[ccy], None, today)
         except Exception:
             pass
@@ -107,13 +114,17 @@ def refresh(conn, symbols_csv=SYMBOLS_CSV):
         try:
             if ticker not in price_cache:
                 if ticker == "GOLD_KRW_G":
-                    usd_oz = float(fdr.DataReader("GC=F")["Close"].iloc[-1])
+                    usd_oz = _last_close(fdr.DataReader("GC=F"))
                     usdkrw = fx.get("USD") or base.get_fx(conn, "USD")
-                    price_cache[ticker] = usd_oz * usdkrw / GRAMS_PER_OZT
+                    price_cache[ticker] = (usd_oz * usdkrw / GRAMS_PER_OZT) if (usd_oz and usdkrw) else None
                 else:
-                    price_cache[ticker] = float(fdr.DataReader(ticker)["Close"].iloc[-1])
-            base.upsert_price(conn, sym, price_cache[ticker], ccy, today)
-            result["updated"].append((sym, ticker, round(price_cache[ticker], 2)))
+                    price_cache[ticker] = _last_close(fdr.DataReader(ticker))
+            px = price_cache[ticker]
+            if px is None:          # 시세를 못 받았으면 옛 값을 그대로 둔다(빈 값으로 덮지 않는다)
+                result["missing"].append(sym)
+                continue
+            base.upsert_price(conn, sym, px, ccy, today)
+            result["updated"].append((sym, ticker, round(px, 2)))
         except Exception as e:
             result["errors"].append((sym, ticker, f"{type(e).__name__}: {str(e)[:50]}"))
     conn.commit()

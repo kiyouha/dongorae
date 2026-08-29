@@ -1,4 +1,4 @@
-# Current  (updated 2026-08-29)
+# Current  (updated 2026-08-30)
 
 ## Goal
 개인 자산관리 웹. **dongorae 단일 앱**(거래·보유·계좌·순자산 + 주식시세·거시경제 + 서울 부동산)
@@ -8,6 +8,7 @@
 전체 동작. **2026-08-29부터 운영 위치를 NAS → 이 맥(`~/Server/dongorae`)으로 옮겼다.** 접속 `http://localhost:8000`(LAN `http://192.168.0.121:8000`), 로그인 필수 + 가족 승인제.
 - **이관(2026-08-29)**: goraes 모노레포에서 **dongorae + auth-server + gateway만** 떼어내 단독 저장소(github kiyouha/dongorae)로. compose는 include 없는 **단일 `docker-compose.yml`**, 앱 코드가 리포 루트(`app/`, `cli.py`, `Dockerfile`). docgorae·NAS 배포 경로(`manage.sh` tar-over-ssh)·`ops/drive-nudge.sh`는 안 가져옴. **don DB는 빈 상태로 새로 시작**(NAS DB는 아직 NAS에 있음 — `./manage.sh nas-pull`로 복제 가능). 자세히는 Run/verify + DECISIONS 2026-08-29.
 - **기동 검증(2026-08-29 22:56)**: 6개 컨테이너 정상 — 랜딩 `/` 200, 미로그인 `/don/` 302(게이트 동작), `/shared/base.css` 200 text/css, auth `:8001` 200, scheduler cron 기동. 맥의 옛 스택 잔재(goraes-* 9개·auth-server-*·구 dongorae-don-nginx)는 전부 제거(볼륨 `goraes_*`는 보존). paperless는 무관하게 그대로.
+- **DB·코드 점검과 정리(2026-08-30)**: 아래 Done '점검' 항목 참조. 가장 큰 것은 **미국 종목 시세가 전부 NaN**이었던 것 — 보유 30종목 중 14개에 시세가 없어 평가금액이 3.4억으로 나왔다. 고친 뒤 6.29억. NAS를 잠깐 켜 **종목 별칭 29건·표시명 17건**을 되찾았고, 나머지 소량 테이블(스냅샷 348·부동산 2·매매규칙 2)은 `data/backup/nas_don_소량테이블_20260830.sql`에 덤프해 뒀다(원하면 언제든 복원).
 - **거래내역 경로 = 아이클라우드(2026-08-30)**: `IMPORTS_DIR`/`EXPORTS_DIR` env 덮어쓰기를 `app/config.py`에 추가하고, 호스트 `~/Library/Mobile Documents/com~apple~CloudDocs/home/금융`를 `/app/finance`로 마운트(`FINANCE_DIR`). 넣는 곳 `…/거래내역`, 내보내기 `…/정리본`. **파일 81개에서 거래 11,621건 적재 완료**(2020-04-12~2026-08-19, 3소유자·24계좌) — 아래 '데이터 전부 비움'은 이걸로 해소됨. 리포의 `data/imports/` 사본은 이제 안 쓰인다.
 - **데이터 전부 비움**: 재사용된 옛 로컬 볼륨에 거래 11,638건(2020-04-12~2026-08-19)·24계좌가 남아 있었으나 **사용자 지시로 폐기**(`down -v`). don/auth DB 모두 0행 — 계좌·거래내역을 처음부터 다시 등록한다.
 - **핵심 전환(P1~P4 완료, 2026-07-18)**: 거래 데이터를 **이중기입 movements 모델**(out 상품→in 상품, 통화도 상품)로 재설계. 대시보드·평가도 movements 기준.
@@ -155,6 +156,15 @@ PostgreSQL + FastAPI(gunicorn) + nginx + cron. 서비스: **dongorae**(앱), **d
 문서함은 (분류·대상자·발행처·제목)→기간(span_no)→날짜 3단 묶음 표. 배포는 `./manage.sh doc-build`.
 
 ## Done (검증됨)
+- **점검·정리(2026-08-30)**
+  · **시세 NaN**: FDR이 미국 종목에 '값 없는 오늘' 한 줄을 붙여 주는데 `["Close"].iloc[-1]`을 그대로 써서 전부 NaN. `_last_close()`로 값 있는 마지막 종가를 쓴다. 국내는 그 줄이 안 붙어 오래 안 드러났다.
+  · NaN 방어 3겹: `upsert_price`가 NaN을 저장 안 함 · `get_price`가 옛 NaN을 걸러냄 · `save_snapshot`이 NaN 줄을 안 남김(NaN 스냅샷 하나가 `/api/nav-monthly`를 통째로 500으로 만들었다).
+  · **관리자 가드 7곳 추가**: refresh-prices·snapshot·macro-refresh·owned-assets(3)·re/sync. 설정 탭 전용 기능이라 UX 변화 없음. `/api/account`·`/api/upload`는 '로그인 사용자=소유자' 설계라 그대로 뒀다.
+  · **죽은 코드 삭제**: 프론트가 한 번도 안 부르던 라우트 21개(docs 15·insurance 3·tx 3·sync·bldg-map/sync) 362줄, `app/docs.py` 258줄, `cli.py scan-docs`, 매분 돌던 scan-docs 크론, 죽은 테이블 3개(documents·insurance·doc_claims, 전부 0행이라 DROP).
+  · **`init_schema`를 프로세스당 1회로**: 25개 핸들러가 매 요청 DDL 94개를 돌리며 테이블마다 ACCESS EXCLUSIVE 락을 잡고 있었다(백필 데드락의 원인).
+  · **movements 인덱스 5개 추가**(trade_date·in/out account·in/out product). PK와 dedupe뿐이었다.
+  · **매니페스트 매분 쓰기 제거**: import 폴더가 아이클라우드라 바뀐 게 없어도 9.9KB를 하루 1,440번 덮어쓰고 있었다.
+  · 정합성은 깨끗했다 — 고아 행 0, 날짜 형식 이상 0, 음수 수량 0, transactions 11,621 = movements 11,621.
 - **문서고래 신설·보험 이관(2026-08-15~20)**: 스캔본 → PDF 변환·합치기·나누기·회전·쪽 삭제/순서
   → 필드대로 `문서/<분류>/<대상자>/YYMMDD_발행처_종류[_금액].pdf`. OCR 없음. 보관은 PDF 하나로 통일(535건).
   돈고래 보험문서 537건 복사 이관(원본 유지). 돈고래 보험 탭은 내림(데이터·API는 남김).
