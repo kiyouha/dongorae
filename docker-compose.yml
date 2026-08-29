@@ -40,7 +40,7 @@ services:
       FILES_DIR: /app/files             # 보험 문서 등 나머지 공유폴더
       # 거래내역은 아이클라우드(home/금융) 직접 사용 — 아이폰 파일앱에서 바로 넣고 본다.
       IMPORTS_DIR: /app/finance/거래내역
-      EXPORTS_DIR: /app/finance/서버 저장
+      EXPORTS_DIR: /app/finance/정리본
       TZ: Asia/Seoul
     volumes:
       - ./data:/app/data                # symbols·로그를 호스트와 공유
@@ -62,7 +62,7 @@ services:
       MOLIT_SERVICE_KEY: ${MOLIT_SERVICE_KEY:-}
       FILES_DIR: /app/files
       IMPORTS_DIR: /app/finance/거래내역   # cron scan-imports가 보는 곳(아이클라우드)
-      EXPORTS_DIR: /app/finance/서버 저장
+      EXPORTS_DIR: /app/finance/정리본
       KIS_ENV: ${KIS_ENV:-vts}          # cron trade-tick가 실시간 시세/주문 쓰려면 필요
       KIS_APPKEY: ${KIS_APPKEY:-}
       KIS_APPSECRET: ${KIS_APPSECRET:-}

@@ -20,7 +20,7 @@ else:
     INSURANCE_DIR = DATA_DIR / "docs" / "정리됨"
 
 # 개별 경로 덮어쓰기(선택). 아이클라우드처럼 FILES_DIR 트리 밖에 두고 싶을 때 쓴다.
-# 예) IMPORTS_DIR=/app/finance/거래내역  EXPORTS_DIR="/app/finance/서버 저장"
+# 예) IMPORTS_DIR=/app/finance/거래내역  EXPORTS_DIR="/app/finance/정리본"
 if os.environ.get("IMPORTS_DIR"):
     IMPORTS_DIR = Path(os.environ["IMPORTS_DIR"])
 if os.environ.get("EXPORTS_DIR"):

@@ -62,7 +62,7 @@ PostgreSQL + FastAPI(gunicorn/uvicorn) + nginx 게이트웨이 + 인증 서버. 
 | 용도 | 맥 경로 | 컨테이너 |
 |---|---|---|
 | 넣는 곳 | `~/Library/Mobile Documents/com~apple~CloudDocs/home/금융/거래내역/` | `/app/finance/거래내역` |
-| 내보내기 | `~/Library/Mobile Documents/com~apple~CloudDocs/home/금융/서버 저장/` | `/app/finance/서버 저장` |
+| 내보내기 | `~/Library/Mobile Documents/com~apple~CloudDocs/home/금융/정리본/` | `/app/finance/정리본` |
 
 - 구조는 `소유주/계좌명/연도_증권사_계좌번호[(n)].csv\|xlsx` (구 평면 이름도 인식). cron이 매분 감지해 적재
 - 앱 **설정 탭 → 파일 업로드**로 올려도 되고, 그러면 원본이 위 폴더에 백업된다
