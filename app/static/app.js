@@ -1998,7 +1998,7 @@ async function famUserAct(id, op) {
   const r = await api("api/family/user-action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: +id, op, owner }) });
   if (r && r.ok) { toast("적용됨"); loadFamily(); } else toast((r && r.error) || "실패");
 }
-async function loadAcctMgr() {   // 등록 계좌 편집 — 계좌명(alias)으로 묶어 본다.
+async function loadAcctMgr() {   // 등록 계좌 편집 — 계좌명이 곧 묶음. 이름은 묶음에서 한 번만 고친다.
   if (!metaAccounts.length) await loadMeta();
   const box = $("#acctMgr"); if (!box) return;
   if (!metaAccounts.length) {
@@ -2009,38 +2009,44 @@ async function loadAcctMgr() {   // 등록 계좌 편집 — 계좌명(alias)으
   const bOpts = (sel) => Object.entries(BROKER_NAME).map(([k, v]) =>
     `<option value="${k}"${k === sel ? " selected" : ""}>${esc(v)}</option>`).join("");
 
-  // 같은 목적의 계좌가 증권사·소유자별로 흩어져 있어도 한 덩이로 보이게 계좌명으로 묶는다.
-  // 계좌명은 각 줄에서 고칠 수 있고, 고쳐 저장하면 그 계좌가 다른 묶음으로 옮겨간다.
-  const NO_ALIAS = "\u0000";
   const groups = new Map();
   for (const a of metaAccounts) {
-    const k = (a.alias || "").trim() || NO_ALIAS;
+    const k = (a.alias || "").trim();
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(a);
   }
-  const keys = [...groups.keys()].sort((x, y) =>
-    (x === NO_ALIAS) - (y === NO_ALIAS) || x.localeCompare(y, "ko"));
-  const aliasList = keys.filter(k => k !== NO_ALIAS);
+  // 계좌명 없는 묶음("")은 맨 아래.
+  const keys = [...groups.keys()].sort((x, y) => (!x) - (!y) || x.localeCompare(y, "ko"));
+  const names = keys.filter(Boolean);
+  // 줄의 '묶음' 칸 — 있는 계좌명 중에서 고르거나 새로 만든다(오타로 묶음이 갈라지지 않게).
+  const gOpts = (cur) => names.map(n => `<option value="${esc(n)}"${n === cur ? " selected" : ""}>${esc(n)}</option>`).join("")
+    + `<option value=""${cur ? "" : " selected"}>계좌명 없음</option><option value="__new__">+ 새 계좌명…</option>`;
 
-  box.innerHTML = `<datalist id="acctAliasList">${aliasList.map(k => `<option value="${esc(k)}"></option>`).join("")}</datalist>`
+  box.innerHTML = `<datalist id="acctAliasList">${names.map(n => `<option value="${esc(n)}"></option>`).join("")}</datalist>`
     + keys.map(k => {
       const list = groups.get(k).slice().sort((x, y) =>
         (x.owner_name || "").localeCompare(y.owner_name || "", "ko")
         || brokerName(x.brokerage).localeCompare(brokerName(y.brokerage), "ko"));
       const owners = [...new Set(list.map(a => a.owner_name).filter(Boolean))];
-      const none = k === NO_ALIAS;
-      return `<div class="acct-group${none ? " noname" : ""}">
+      const ids = list.map(a => a.id).join(",");
+      return `<div class="acct-group${k ? "" : " noname"}" data-group="${esc(k)}">
         <div class="acct-group-hd">
-          <span class="g-name">${none ? "계좌명 없음" : esc(k)}</span>
+          ${k ? `<div class="field g-name-field">
+                   <label>계좌명</label>
+                   <input class="agName" list="acctAliasList" value="${esc(k)}" data-orig="${esc(k)}">
+                 </div>
+                 <button type="button" class="mini agRename" data-accts="${ids}">이름 저장</button>`
+              : `<div class="field g-name-field"><label>계좌명</label>
+                   <div class="static-val muted">없음</div></div>
+                 <span class="g-hint">아래 '묶음' 칸에서 계좌명을 정하면 묶입니다</span>`}
           <span class="g-meta">계좌 ${list.length}${owners.length ? " · " + owners.map(esc).join(", ") : ""}</span>
-          ${none ? `<span class="g-hint">계좌명을 넣으면 묶입니다</span>`
-                 : `<a class="stock-link acct-drill" data-accts="${list.map(a => a.id).join(",")}" title="이 계좌명의 거래내역 보기">거래</a>`}
+          ${k ? `<a class="stock-link acct-drill" data-accts="${ids}" title="이 계좌명의 거래내역 보기">거래</a>` : ""}
         </div>
         ${list.map(a => `<div class="acctmgr-row" data-id="${a.id}">
           <div class="field"><label>소유자</label><div class="static-val">${esc(a.owner_name || "")}</div></div>
           <div class="field"><label>증권사</label><select class="amBroker">${bOpts(a.brokerage)}</select></div>
           <div class="field"><label>계좌번호</label><input class="amNo" value="${esc(a.account_no || "")}"></div>
-          <div class="field"><label>계좌명</label><input class="amAlias" list="acctAliasList" value="${esc(a.alias || "")}" placeholder="예: 종합"></div>
+          <div class="field"><label>묶음</label><select class="amGroup">${gOpts(k)}</select></div>
           <div class="acct-acts">
             <button type="button" class="mini amSave">저장</button>
             <a class="stock-link acct-drill" data-accts="${a.id}" title="이 계좌 거래내역">거래</a>
@@ -2049,11 +2055,47 @@ async function loadAcctMgr() {   // 등록 계좌 편집 — 계좌명(alias)으
       </div>`;
     }).join("");
 }
+
+// 묶음 이름 바꾸기 — 그 묶음의 계좌 전부를 새 이름으로. 있는 이름으로 바꾸면 두 묶음이 합쳐진다.
+async function renameAcctGroup(btn) {
+  const hd = btn.closest(".acct-group-hd"), inp = hd.querySelector(".agName");
+  const next = inp.value.trim(), prev = (inp.dataset.orig || "").trim();
+  if (next === prev) { toast("바뀐 게 없습니다"); return; }
+  const ids = btn.dataset.accts.split(",").map(Number);
+  if (!next && !confirm(`계좌 ${ids.length}개의 계좌명을 지울까요?\n(묶음이 풀려 '계좌명 없음'으로 내려갑니다)`)) return;
+  if (next && names0().includes(next)
+      && !confirm(`'${next}' 묶음이 이미 있습니다.\n두 묶음을 합칠까요?`)) return;
+  btn.disabled = true; btn.textContent = "저장 중…";
+  try {
+    for (const id of ids) {
+      const a = metaAccounts.find(x => x.id === id); if (!a) continue;
+      const r = await api("api/account/" + id, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ account_no: a.account_no, brokerage: a.brokerage, alias: next || null }),
+      });
+      if (r && r.error) throw new Error(r.error);
+    }
+    toast(next ? `계좌 ${ids.length}개를 '${next}'로` : `계좌명을 지웠습니다`);
+    metaAccounts = []; await loadMeta(); loadAcctMgr();
+  } catch (e) { toast("실패: " + (e.message || "")); btn.disabled = false; btn.textContent = "이름 저장"; }
+}
+const names0 = () => [...new Set(metaAccounts.map(a => (a.alias || "").trim()).filter(Boolean))];
+
+// '+ 새 계좌명…'을 고르면 그 칸을 입력칸으로 바꾼다.
+function acctGroupPick(sel) {
+  if (sel.value !== "__new__") return;
+  const inp = document.createElement("input");
+  inp.className = "amGroupNew"; inp.setAttribute("list", "acctAliasList"); inp.placeholder = "새 계좌명";
+  sel.replaceWith(inp); inp.focus();
+}
+
 async function saveAcct(row) {
   const id = row.dataset.id;
+  const newInp = row.querySelector(".amGroupNew"), sel = row.querySelector(".amGroup");
+  const alias = (newInp ? newInp.value : sel ? sel.value : "").trim();
   const body = {
     account_no: row.querySelector(".amNo").value.trim(),
-    alias: row.querySelector(".amAlias").value.trim(),
+    alias: alias === "__new__" ? "" : alias,
     brokerage: row.querySelector(".amBroker").value,
   };
   const r = await api("api/account/" + id, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -3652,8 +3694,12 @@ async function init() {
   on("#btnReconcile", "click", loadReconcile);
   on("#btnImportScan", "click", scanImports);
   on("#acctMgr", "click", e => {
+    const g = e.target.closest(".agRename"); if (g) { renameAcctGroup(g); return; }
     const b = e.target.closest(".amSave"); if (b) { saveAcct(b.closest(".acctmgr-row")); return; }
     const d = e.target.closest(".acct-drill"); if (d) { e.preventDefault(); drillAccount(d.dataset.accts.split(",")); }
+  });
+  on("#acctMgr", "change", e => {
+    const sel = e.target.closest(".amGroup"); if (sel) acctGroupPick(sel);
   });
   on("#resetLedger", "click", resetLedger);
   $("#mTable").addEventListener("click", async e => {
