@@ -1,0 +1,22 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "dongorae",
+      "Group": "dongorae",
+      "Host": "don-db",
+      "Port": 5432,
+      "Username": "don",
+      "MaintenanceDB": "don",
+      "SSLMode": "prefer"
+    },
+    "2": {
+      "Name": "auth-server",
+      "Group": "dongorae",
+      "Host": "auth-db",
+      "Port": 5432,
+      "Username": "auth",
+      "MaintenanceDB": "auth",
+      "SSLMode": "prefer"
+    }
+  }
+}

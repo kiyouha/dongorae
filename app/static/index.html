@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>돈고래 · 자산현황</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="static/img/icon-32.png?v=1">
+  <link rel="icon" type="image/png" sizes="192x192" href="static/img/icon-192.png?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="static/img/icon-180.png?v=1">
+  <meta name="theme-color" content="#08090a">
+  <link rel="stylesheet" href="static/styles.css?v=20260826c">
+  <link rel="stylesheet" href="/shared/base.css?v=20260826c">
+</head>
+<body>
+  <div class="app">
+    <aside class="side">
+      <div class="side-top">
+        <div class="brand"><img src="static/img/icon-48.png?v=2" alt="" class="brand-icon"> 돈고래</div>
+        <a class="app-switch" href="/doc/" title="문서고래로 이동" aria-label="문서고래로 이동">
+          <img src="/doc/static/img/icon-48.png?v=2" alt=""><span>문서고래</span></a>
+      </div>
+      <nav class="side-nav" id="sideNav">
+      <div class="nav-group">
+        <div class="nav-label">현황</div>
+        <button class="nav-item" data-view="dashboard"><span class="ico">◈</span>대시보드</button>
+        <button class="nav-item" data-view="assets"><span class="ico">▤</span>자산내역</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">기록</div>
+        <button class="nav-item" data-view="tx"><span class="ico">⇄</span>거래내역</button>
+        <button class="nav-item" data-view="invest"><span class="ico">◪</span>투자내역</button>
+        <button class="nav-item" data-view="trade"><span class="ico">⚡</span>매매</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">살펴보기</div>
+        <button class="nav-item" data-view="analysis"><span class="ico">◐</span>분석</button>
+        <button class="nav-item" data-view="watch"><span class="ico">☆</span>관심종목/매물</button>
+      </div>
+        <div class="nav-group" style="margin-top:auto">
+        <button class="nav-item" data-view="admin" id="tabAdmin" style="display:none"><span class="ico">⚙</span>설정</button>
+        </div>
+      </nav>
+      <div class="side-foot">
+        <div class="userbox" id="userBox"></div>
+      </div>
+    </aside>
+
+    <div class="content">
+      <div class="topbar">
+        <img src="static/img/icon-48.png?v=2" alt="" class="brand-icon">
+        <h1 id="pageTitle">대시보드</h1>
+        <div class="bar-acts">
+          <div class="head-total">
+            <div class="v num" id="totalAsset">-</div>
+            <div class="l" id="totalSub">불러오는 중…</div>
+          </div>
+          <a class="app-switch" href="/doc/" title="문서고래로 이동" aria-label="문서고래로 이동">
+            <img src="/doc/static/img/icon-48.png?v=2" alt=""><span>문서고래</span></a>
+        </div>
+      </div>
+
+  <main>
+    <section class="view active" id="view-dashboard">
+      <div class="page">
+        <div class="toolbar">
+          <div id="dashOwner"></div>
+          <span class="div"></span>
+          <div id="marketStrip" class="ticker" style="margin-bottom:0;flex:1;min-width:0"></div>
+          <a id="macroRefresh2" class="toggle-link" style="white-space:nowrap;cursor:pointer;flex:none">↻ 갱신</a>
+        </div>
+
+        <!-- 추이는 왼쪽, 그 순자산이 무엇으로 이뤄졌는지는 오른쪽. 한 화면에서 같이 읽힌다. -->
+        <div class="grid grid-side">
+          <section class="hero" id="hero"></section>
+          <section class="card">
+            <div class="cardhd"><h3>자산 배분</h3><span class="mini-note" id="allocNote"></span></div>
+            <div class="alloc-donut" id="allocations"></div>
+          </section>
+        </div>
+
+        <!-- 평가손익·실현손익·배당·이자를 한 판에 모은다(예전엔 네 칸으로 흩어져 숫자만 있었다). -->
+        <div id="incomePanel"></div>
+
+        <div class="grid grid-side">
+          <section class="card">
+            <div class="cardhd"><h3>보유 종목</h3><span class="mini-note"><a data-go="invest">전체 보기 →</a></span></div>
+            <div class="holds" id="holdSummary"></div>
+          </section>
+          <section class="card">
+            <div class="cardhd"><h3>실물 자산</h3><span class="mini-note">부동산 등</span></div>
+            <div id="ownedBox"></div>
+          </section>
+        </div>
+
+        <section>
+          <div class="page-hd">
+            <h2>배당 · 이자</h2>
+            <span class="sub" id="divSub">전 기간 월별</span>
+          </div>
+          <div class="card pad"><div id="divChart"></div></div>
+          <div id="divSummary" style="margin-top:var(--sp-3)"></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="view" id="view-assets">
+      <div class="page">
+        <div id="assetSum"></div>
+        <div>
+          <div id="assetChips" class="chips" style="margin-top:0"></div>
+          <div id="assetList"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-tx">
+      <div class="page">
+        <div>
+          <!-- 필터 줄 / 동작 줄을 나눈다. 한 줄에 열두 개가 섞여 있으면 무엇이 필터인지 안 보인다. -->
+          <div class="toolbar">
+            <div id="mOwner"></div>
+            <div id="mAccount"></div>
+            <div id="mBroker"></div>
+            <select id="mKind"><option value="">유형 전체</option></select>
+            <button id="mPrev" class="pill-reset" title="이전 달" style="padding:0 10px">◀</button>
+            <select id="mMonth" title="연월 선택"></select>
+            <button id="mNext" class="pill-reset" title="다음 달" style="padding:0 10px">▶</button>
+            <input type="search" id="mSearch" placeholder="상품 검색">
+            <label class="chk" title="CMA·RP 예금성 이동(예치/인출) 보기"><input type="checkbox" id="mSweep"> 예치·인출</label>
+            <button class="pill-reset" id="mReset">초기화</button>
+            <span class="spacer"></span>
+            <span id="mCashSum" class="muted cash-sum"></span>
+            <span class="div"></span>
+            <button class="pill-reset" id="mRebuild" title="거래를 통합 원장으로 재생성">재생성</button>
+            <button class="refresh primary" id="mAdd">+ 거래 추가</button>
+          </div>
+          <div id="mAddForm"></div>
+          <div class="card">
+            <div class="tablewrap"><table id="mTable" class="compact"></table></div>
+            <div id="mPagerInfo" class="pager-info"></div>
+          </div>
+          <details class="help" style="margin-top:var(--sp-2)">
+            <summary>이 화면은 어떻게 쓰나요</summary>
+            <div class="help-body">
+              모든 거래의 <b>유일한 입력 창구</b>입니다. 계좌를 하나만 고르면 각 행에 그 시점의 원화·외화 잔액이 같이 나옵니다.
+              매매만 보려면 <b>투자내역</b>으로 가세요.
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-invest">
+      <div class="page">
+        <div class="stats" id="investKpis"></div>
+
+        <div class="grid grid-side">
+          <section class="card">
+            <div class="cardhd"><h3>종목 자산배분</h3></div>
+            <div id="investAlloc" style="padding:0 var(--sp-4) var(--sp-4)"></div>
+          </section>
+          <section class="card">
+            <div class="cardhd"><h3>환전</h3><span class="mini-note">내가 산 환율</span></div>
+            <div id="fxSum"></div>
+            <details class="help" id="fxBox" style="margin:0 var(--sp-4) var(--sp-4)">
+              <summary>환전 내역 보기</summary>
+              <div class="help-body" id="fxList" style="max-width:none"></div>
+            </details>
+          </section>
+        </div>
+
+        <section>
+          <div class="page-hd">
+            <h2>보유 종목</h2>
+            <span class="sub">현재가만 갱신됩니다. 입력은 거래내역에서</span>
+            <span class="acts">
+              <span id="investToggle" class="toggle-link"></span>
+              <button class="pill-reset" id="investCsv">CSV</button>
+            </span>
+          </div>
+          <div class="card tablewrap"><table id="investHoldings"></table></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="view" id="view-trade">
+      <div class="page">
+        <section>
+          <div class="page-hd">
+            <h2>한국투자증권</h2>
+            <span class="sub">연결 상태와 잔고</span>
+          </div>
+          <div id="kisBox"></div>
+        </section>
+
+        <section>
+          <div class="page-hd">
+            <h2>자동매매 규칙</h2>
+            <span class="sub">장중(평일 09:00~15:30) 매분 현재가를 확인해 조건에 맞으면 사고팝니다</span>
+            <span class="acts"><span class="badge b-k">모의투자</span></span>
+          </div>
+
+          <div class="card pad">
+            <div class="form-grid" id="trForm">
+              <div class="field wide">
+                <label for="trType">전략</label>
+                <select id="trType">
+                  <option value="band-intraday">장중밴드</option>
+                  <option value="band-daily">일봉스윙</option>
+                  <option value="grid">그리드(사다리)</option>
+                  <option value="bandgrid">밴드그리드(하이브리드)</option>
+                  <option value="custom">커스텀 그리드</option>
+                </select>
+              </div>
+              <div class="field"><label for="trSym">종목코드</label><input id="trSym" placeholder="011200"></div>
+              <div class="field"><label for="trName">이름</label><input id="trName" placeholder="HMM"></div>
+              <div class="field"><label for="trQty">수량<span class="hint"> 주</span></label><input id="trQty" type="number" value="1"></div>
+              <div class="field">
+                <label for="trOrd">주문 방식</label>
+                <select id="trOrd" title="IOC지정가는 현재가로 지정해 스프레드를 안 물고, 즉시 체결 안 된 잔량은 자동 취소됩니다.">
+                  <option value="market">시장가</option><option value="ioc">IOC지정가</option>
+                </select>
+              </div>
+
+              <!-- 전략마다 필요한 값이 다르다. 고른 전략의 칸만 나온다. -->
+              <div class="field trBandF"><label for="trMa">평균 기간<span class="hint" id="trMaU"> 분</span></label><input id="trMa" type="number" value="20"></div>
+              <div class="field trBandF"><label for="trK">밴드 폭<span class="hint"> ×σ</span></label><input id="trK" type="number" step="0.1" value="1.5"></div>
+              <div class="field trGridF" style="display:none"><label for="trStep">그리드 간격<span class="hint"> 원</span></label><input id="trStep" type="number" value="100"></div>
+              <div class="field trGridF" style="display:none"><label for="trMax">보유 상한<span class="hint"> 주 · 0=무제한</span></label><input id="trMax" type="number" value="0"></div>
+              <div class="field trLevelF" style="display:none"><label for="trLevels">층 수</label><input id="trLevels" type="number" value="5"></div>
+              <div class="field trCenterF" style="display:none"><label for="trCenter">기준선<span class="hint"> 원 · 커스텀은 필수</span></label><input id="trCenter" type="number" placeholder="기준금액"></div>
+              <div class="field trCustomF" style="display:none"><label for="trGapT">층 간격<span class="hint"> 틱</span></label><input id="trGapT" type="number" value="2"></div>
+              <div class="field trCustomF" style="display:none"><label for="trShare">층당 비중<span class="hint"> %</span></label><input id="trShare" type="number" step="1" value="10"></div>
+              <div class="field trCustomF" style="display:none"><label for="trEod">종가 정리<span class="hint"> % · 0=안 함</span></label><input id="trEod" type="number" step="1" value="0"></div>
+
+              <div class="full"><div id="trHelp" class="tile" style="padding:var(--sp-3) var(--sp-4)"></div></div>
+
+              <div class="form-acts">
+                <button id="trSave" class="refresh primary">규칙 추가</button>
+                <button id="trCancel" class="pill-reset" style="display:none">취소</button>
+                <span class="spacer"></span>
+                <button id="trChartBtn" class="pill-reset">차트</button>
+                <button id="trTick" class="pill-reset">지금 평가</button>
+              </div>
+            </div>
+            <div id="trChartBox" style="margin-top:var(--sp-3)"></div>
+          </div>
+
+          <div id="trRules" style="margin-top:var(--sp-3)"></div>
+        </section>
+
+        <section>
+          <div class="page-hd">
+            <h2>체결 로그</h2>
+            <span class="acts">
+              <button class="pill-reset" id="trToday">오늘</button>
+              <button class="pill-reset" id="trWeek">최근 7일</button>
+              <button class="pill-reset" id="trAll">전체</button>
+              <span class="div"></span>
+              <input type="date" id="trFrom" title="시작일" style="width:140px">
+              <input type="date" id="trTo" title="종료일" style="width:140px">
+            </span>
+          </div>
+          <div id="trLog"></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="view" id="view-analysis">
+      <div class="tabs subtabs">
+        <button class="tab active subtab" data-sub="market">시장·경제</button>
+        <button class="tab subtab" data-sub="overseas">해외주식 양도세</button>
+      </div>
+      <div class="subpanel" data-sub="market">
+        <div class="page">
+          <div class="stats" id="anKpis"></div>
+
+          <section>
+            <div class="page-hd">
+              <h2>종목별 손익</h2>
+              <span class="sub">지금 안 들고 있는 종목도 나옵니다</span>
+              <span class="acts">
+                <select id="pnlScope">
+                  <option value="">전체 종목</option>
+                  <option value="held">보유 중만</option>
+                  <option value="sold">정리한 것만</option>
+                </select>
+                <input type="search" id="pnlQ" placeholder="종목 검색" style="width:150px">
+                <span class="muted" id="pnlCount" style="font-size:var(--fs-xs)"></span>
+              </span>
+            </div>
+            <div id="pnlSum"></div>
+            <div id="pnlList"></div>
+          </section>
+
+          <section>
+            <div class="page-hd"><h2>자산 추이</h2></div>
+            <div class="card pad"><div id="anNav"></div></div>
+          </section>
+
+          <section>
+            <div class="page-hd"><h2>자산 배분 · 비중</h2></div>
+            <div id="anAlloc"></div>
+          </section>
+        </div>
+      </div>
+      <div class="subpanel" data-sub="overseas" style="display:none">
+        <div class="page">
+          <section>
+            <div class="page-hd">
+              <h2>해외주식 양도소득세</h2>
+              <span class="sub">추정치입니다. 실제 신고·납부는 전문가를 통하세요</span>
+            </div>
+            <div id="taxBox"></div>
+            <details class="help" style="margin-top:var(--sp-3)">
+              <summary>어떻게 계산하나요</summary>
+              <div class="help-body">
+                투자 매매내역의 실현손익에서 <b>기본공제 250만원</b>을 빼고 <b>세율 22%</b>를 적용합니다.
+                금융소득 종합과세(이자·배당 2천만 초과)도 참고로 함께 표시합니다.
+              </div>
+            </details>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-watch">
+      <div class="tabs subtabs">
+        <button class="tab active subtab" data-sub="watchre">부동산</button>
+        <button class="tab subtab" data-sub="watchstock">종목</button>
+      </div>
+      <div class="subpanel" data-sub="watchre">
+        <div class="page">
+          <section>
+            <div class="page-hd">
+              <h2>실거래가</h2>
+              <span class="sub">국토부 · 서울</span>
+              <span class="acts">
+                <button class="pill-reset" id="reCsv">CSV</button>
+                <button class="refresh" id="rSync">갱신</button>
+              </span>
+            </div>
+            <div class="toolbar">
+              <select id="rType">
+                <option value="">거래유형 전체</option>
+                <option value="매매">매매</option><option value="전세">전세</option><option value="월세">월세</option>
+              </select>
+              <select id="rGu"><option value="">구 전체</option></select>
+              <input type="search" id="rApt" placeholder="단지 검색">
+              <input type="number" id="rAreaMin" placeholder="면적≥" style="width:88px">
+              <input type="number" id="rAreaMax" placeholder="면적≤" style="width:88px">
+              <input type="date" id="rFrom" title="시작일" style="width:140px">
+              <input type="date" id="rTo" title="종료일" style="width:140px">
+              <button class="pill-reset" id="rReset">초기화</button>
+            </div>
+            <div class="card tablewrap"><table id="reTable"></table></div>
+            <div class="pager">
+              <span id="rePagerInfo"></span>
+              <button id="rePrev">이전</button>
+              <button id="reNext">다음</button>
+            </div>
+          </section>
+
+          <section>
+            <div class="page-hd">
+              <h2>관심 매물</h2>
+              <span class="sub">보통은 위 실거래가 표에서 '+관심'으로 담습니다</span>
+            </div>
+            <details class="help">
+              <summary>목록에 없는 단지 직접 추가</summary>
+              <div class="help-body">
+                <div class="form-grid" style="max-width:720px">
+                  <div class="field wide"><label for="wApt">단지명<span class="req">*</span></label><input id="wApt"></div>
+                  <div class="field"><label for="wGu">구</label><select id="wGu"><option value="">구</option></select></div>
+                  <div class="field"><label for="wArea">전용<span class="hint"> ㎡</span></label><input id="wArea" type="number" step="0.01"></div>
+                  <div class="field"><label for="wFloor">층</label><input id="wFloor" type="number"></div>
+                  <div class="field"><label for="wPrice">호가<span class="hint"> 만원</span></label><input id="wPrice" type="number"></div>
+                  <div class="field wide"><label for="wNote">메모</label><input id="wNote"></div>
+                  <div class="form-acts"><button id="wAdd" class="refresh primary">등록</button></div>
+                </div>
+              </div>
+            </details>
+            <div id="watchList"></div>
+          </section>
+        </div>
+      </div>
+      <div class="subpanel" data-sub="watchstock" style="display:none">
+        <div class="blank">
+          <div class="t">관심 종목 · 준비 중</div>
+          <div class="d">아직 사지 않은 주식을 담아 두고 목표가와 비교하는 자리입니다.
+            매수하면 거래내역에 넣는 것만으로 보유 종목으로 넘어갑니다.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- (구) 보험 화면 — 문서고래로 이관. 되돌릴 일이 있으면 git 이력에서 꺼낸다. -->
+
+    <!-- (구) 세금 탭 — 해외주식 양도세는 분석으로 옮겼다.
+         부동산 양도세·취득세·납부내역은 준비 중이라 화면에서 내렸다(만들 때 다시 꺼낸다). -->
+    <section class="view" id="view-admin">
+      <div class="tabs subtabs" style="margin-bottom:12px">
+        <button class="tab active subtab" data-sub="acctmgr">계좌·자산</button>
+        <button class="tab subtab" data-sub="alias">종목 별칭</button>
+        <button class="tab subtab" data-sub="family">가족</button>
+        <button class="tab subtab" data-sub="data">데이터</button>
+        <button class="tab subtab" data-sub="danger">위험구역</button>
+      </div>
+
+      <div class="subpanel" data-sub="acctmgr">
+      <div class="page">
+        <section>
+          <div class="page-hd">
+            <h2>계좌</h2>
+            <span class="sub">거래 입력은 거래내역에서만 합니다</span>
+            <span class="acts"><button class="refresh primary" id="acctAdd">+ 계좌 추가</button></span>
+          </div>
+          <div id="acctAddForm"></div>
+          <div class="card pad"><div id="acctMgr"></div></div>
+        </section>
+
+        <section>
+          <div class="page-hd">
+            <h2>부동산 · 실물자산</h2>
+            <span class="sub">취득~매도 기간에만 순자산에 잡힙니다</span>
+          </div>
+          <div class="card pad">
+            <!-- 라벨·표시 여부는 종류(매매/전세/월세)에 따라 ownedKindFields()가 갈아끼운다.
+                 같은 칸이라도 자가는 '시세', 전세는 '보증금'이고 매도일은 '계약 종료일'이 된다. -->
+            <!-- 라벨·표시 여부는 종류(매매/전세/월세)에 따라 ownedKindFields()가 갈아끼운다. -->
+            <div class="form-grid">
+              <div class="field">
+                <label for="oKind">종류</label>
+                <select id="oKind">
+                  <option value="자가">매매 (자가)</option><option value="전세">전세</option>
+                  <option value="월세">월세</option><option value="기타자산">기타자산</option>
+                </select>
+              </div>
+              <div class="field wide" id="fld-oName">
+                <label for="oName">이름<span class="req">*</span></label>
+                <input id="oName" placeholder="마포래미안 84㎡">
+              </div>
+              <div class="field" id="fld-oOwner"><label for="oOwner">소유자</label><input id="oOwner" list="personList"></div>
+
+              <!-- 실거래가 연결은 이름에 딸린 것이다. 아래 별도 구획으로 떼어 놓으면
+                   '이 집이 어느 단지인가'를 두 군데서 보게 된다. -->
+              <div class="full" id="oLinkBox">
+                <div class="re-link-row">
+                  <div class="field">
+                    <label for="oReQ">실거래가 연결<span class="hint"> 국토부 · 서울 아파트</span></label>
+                    <input id="oReQ" placeholder="단지 검색 (예: 당산푸르지오)">
+                  </div>
+                  <div class="field"><label for="oRePick">단지 · 면적</label>
+                    <select id="oRePick"><option value="">검색 결과…</option></select></div>
+                  <div class="re-link-acts">
+                    <button id="oReQuote" class="mini primary">시세 가져오기</button>
+                    <button id="oReClear" class="mini">해제</button>
+                  </div>
+                </div>
+                <div class="re-link-info" id="oReInfo"></div>
+              </div>
+
+              <div class="field" id="fld-oValue"><label for="oValue">시세<span class="hint"> 원</span></label><input id="oValue" type="number"></div>
+              <div class="field" id="fld-oAsof">
+                <label for="oAsof">시세 기준일<span class="hint"> 이 날 이전은 취득가로 계산</span></label>
+                <input id="oAsof" type="date">
+              </div>
+              <div class="field" id="fld-oMonthly"><label for="oMonthly">월세<span class="hint"> 원 · 매달</span></label><input id="oMonthly" type="number"></div>
+              <div class="full"><div class="sold-note" id="oSoldNote" style="display:none"></div></div>
+
+              <!-- 담보대출은 아래 '부채'에 등록한 항목에서 고른다.
+                   여기에 금액을 또 적으면 순액에서 두 번 빠진다(자가는 value−loan, 대출은 −value). -->
+              <div class="full" id="fld-oLoans">
+                <div class="form-sep">담보대출</div>
+                <div id="oLoanPick" class="loan-pick"></div>
+              </div>
+
+              <div class="form-sep" id="sep-acq">취득</div>
+              <div class="field" id="fld-oAcqDate"><label for="oAcqDate">취득일</label><input id="oAcqDate" type="date"></div>
+              <div class="full"><div class="sold-note warn" id="oAcqWarn" style="display:none"></div></div>
+              <div class="full" id="fld-oAcqPay">
+                <div class="pay-row" id="oAcqPay">
+                  <div class="field"><label for="oAcqP1">가계약금<span class="hint"> 원</span></label><input id="oAcqP1" type="number"></div>
+                  <div class="field"><label for="oAcqP2">계약금<span class="hint"> 원</span></label><input id="oAcqP2" type="number"></div>
+                  <div class="field"><label for="oAcqP3">중도금<span class="hint"> 원</span></label><input id="oAcqP3" type="number"></div>
+                  <div class="field"><label for="oAcqP4">잔금<span class="hint"> 원</span></label><input id="oAcqP4" type="number"></div>
+                  <div class="pay-sum"><span class="lab" id="oAcqSumLab">취득가</span><b class="num" id="oAcqSum">0</b></div>
+                </div>
+              </div>
+
+              <div class="form-sep" id="sep-disp">매도 <span style="font-weight:400">(선택)</span></div>
+              <div class="field" id="fld-oDispDate"><label for="oDispDate">매도일</label><input id="oDispDate" type="date"></div>
+              <div class="full" id="fld-oDispPay">
+                <div class="pay-row" id="oDispPay">
+                  <div class="field"><label for="oDisP1">가계약금<span class="hint"> 원</span></label><input id="oDisP1" type="number"></div>
+                  <div class="field"><label for="oDisP2">계약금<span class="hint"> 원</span></label><input id="oDisP2" type="number"></div>
+                  <div class="field"><label for="oDisP3">중도금<span class="hint"> 원</span></label><input id="oDisP3" type="number"></div>
+                  <div class="field"><label for="oDisP4">잔금<span class="hint"> 원</span></label><input id="oDisP4" type="number"></div>
+                  <div class="pay-sum"><span class="lab" id="oDispSumLab">매도가</span><b class="num" id="oDispSum">0</b></div>
+                </div>
+              </div>
+
+              <div class="field wide" id="fld-oNote"><label for="oNote">메모</label><input id="oNote"></div>
+
+              <div class="form-acts">
+                <button id="oAdd" class="refresh primary">추가</button>
+                <button id="oCancel" class="pill-reset" style="display:none">취소</button>
+              </div>
+            </div>
+            <div id="ownedMgrList" style="margin-top:var(--sp-4)"></div>
+          </div>
+        </section>
+
+        <section>
+          <div class="page-hd">
+            <h2>부채</h2>
+            <span class="sub">부동산·계좌에 연결해 두면 어디에 걸린 빚인지 남습니다</span>
+          </div>
+          <div class="card pad">
+            <div class="form-grid">
+              <div class="field">
+                <label for="dKind">종류</label>
+                <select id="dKind">
+                  <option value="대출">대출</option><option value="임대">임대(받은 보증금)</option>
+                  <option value="기타부채">기타부채</option>
+                </select>
+              </div>
+              <div class="field wide" id="fld-dName"><label for="dName">이름<span class="req">*</span></label><input id="dName" placeholder="주택담보대출"></div>
+              <div class="field" id="fld-dOwner"><label for="dOwner">명의자</label><input id="dOwner" list="personList"></div>
+              <div class="field" id="fld-dValue"><label for="dValue">잔액<span class="hint"> 원</span></label><input id="dValue" type="number"></div>
+              <div class="field" id="fld-dMonthly"><label for="dMonthly">월 상환<span class="hint"> 원</span></label><input id="dMonthly" type="number"></div>
+              <div class="field" id="fld-dAsof"><label for="dAsof">잔액 기준일</label><input id="dAsof" type="date"></div>
+
+              <div class="form-sep" id="sep-dacq">실행</div>
+              <div class="field" id="fld-dAcqDate"><label for="dAcqDate">실행일</label><input id="dAcqDate" type="date"></div>
+              <div class="field" id="fld-dAcqKrw"><label for="dAcqKrw">원금<span class="hint"> 원</span></label><input id="dAcqKrw" type="number"></div>
+
+              <div class="form-sep" id="sep-ddisp">상환 <span style="font-weight:400">(선택)</span></div>
+              <div class="field" id="fld-dDispDate"><label for="dDispDate">상환완료일</label><input id="dDispDate" type="date"></div>
+              <div class="field wide" id="fld-dNote"><label for="dNote">메모</label><input id="dNote"></div>
+
+              <div class="form-sep">연결</div>
+              <div class="field wide" id="fld-dLinkOwned"><label for="dLinkOwned">부동산</label><select id="dLinkOwned"><option value="">연결 안 함</option></select></div>
+              <div class="field wide" id="fld-dLinkAcct"><label for="dLinkAcct">계좌</label><select id="dLinkAcct"><option value="">연결 안 함</option></select></div>
+
+              <div class="form-acts">
+                <button id="dAdd" class="refresh primary">추가</button>
+                <button id="dCancel" class="pill-reset" style="display:none">취소</button>
+              </div>
+            </div>
+            <div id="debtMgrList" style="margin-top:var(--sp-4)"></div>
+          </div>
+        </section>
+      </div>
+      </div>
+
+      <div class="subpanel" data-sub="alias" style="display:none">
+      <div class="page">
+        <section>
+          <div class="page-hd">
+            <h2>종목 관리</h2>
+            <span class="sub">티커는 시세 연결에, 표시명은 긴 이름을 짧게 쓰는 데 씁니다</span>
+            <span class="acts"><span id="symCount" class="muted" style="font-size:var(--fs-xs)"></span>
+              <button id="symSync" class="pill-reset" title="KRX + 미국 전체 상장목록을 다시 받습니다">상장목록 갱신</button></span>
+          </div>
+          <div class="card pad">
+            <div id="symMgrList"><div class="muted">불러오는 중…</div></div>
+            <details class="help" style="margin-top:var(--sp-3)">
+              <summary>목록에 없는 종목 직접 추가</summary>
+              <div class="help-body">
+                <div class="form-grid" style="max-width:520px">
+                  <div class="field wide"><label for="alName">종목명</label><input id="alName" placeholder="코카콜라"></div>
+                  <div class="field"><label for="alTicker">티커</label><input id="alTicker" placeholder="KO"></div>
+                  <div class="field"><label for="alCcy">시장</label>
+                    <select id="alCcy"><option value="USD">미국(USD)</option><option value="KRW">국내(KRW)</option></select></div>
+                  <div class="form-acts"><button id="alSave" class="refresh primary">추가</button></div>
+                </div>
+              </div>
+            </details>
+          </div>
+        </section>
+      </div>
+      </div>
+
+      <div class="subpanel" data-sub="family" style="display:none">
+      <div class="page">
+        <section>
+          <div class="page-hd">
+            <h2>가족</h2>
+            <span class="sub">로그인 안 하는 가족(부모·형제)도 추가하세요 — 문서 대상자·자산 소유자로 쓰입니다</span>
+          </div>
+          <div class="card pad">
+            <div class="form-grid" style="max-width:640px">
+              <div class="field"><label for="famName">이름</label><input id="famName" placeholder="영한 엄마"></div>
+              <div class="field"><label for="famRel">관계</label><input id="famRel" list="relList" placeholder="부모"></div>
+              <div class="field"><label for="famNote">메모</label><input id="famNote"></div>
+              <div class="form-acts"><button id="famAdd" class="refresh primary">+ 가족 추가</button></div>
+            </div>
+            <datalist id="relList"><option value="본인"></option><option value="배우자"></option><option value="자녀"></option><option value="부모"></option><option value="형제"></option><option value="조부모"></option></datalist>
+            <div id="famList" style="margin-top:var(--sp-4)"></div>
+          </div>
+        </section>
+
+        <section>
+          <div class="page-hd">
+            <h2>로그인 사용자</h2>
+            <span class="sub">네이버 로그인 승인 · 소유자(자산 라벨) 지정</span>
+          </div>
+          <div id="famUsers"></div>
+        </section>
+      </div>
+      </div>
+
+      <div class="subpanel" data-sub="data" style="display:none">
+      <div class="page">
+        <section>
+          <div class="page-hd">
+            <h2>거래내역 들이기</h2>
+            <span class="sub">증권사 파일을 계좌별로 적재합니다</span>
+          </div>
+          <div class="grid grid-2">
+            <div class="tile">
+              <div class="t">파일 업로드</div>
+              <div class="d"><b>KB는 xlsx</b>를 쓰세요. CSV는 환전·배당·세금이 빠집니다.
+                올린 파일은 <code>imports</code> 폴더에도 표준 이름으로 보관됩니다.</div>
+              <div class="a"><button class="refresh primary" id="btnUpload">파일 열기</button></div>
+            </div>
+            <div class="tile">
+              <div class="t">자동 적재</div>
+              <div class="d">NAS <code>data/imports/</code> 에
+                <code>소유주_계좌명_증권사_계좌번호_연도</code> 형식으로 넣으면 <b>매 1분</b> 자동으로 들어옵니다.</div>
+              <div class="a"><button class="refresh" id="btnImportScan">지금 스캔</button>
+                <span id="importScanResult" class="muted" style="font-size:var(--fs-2xs)"></span></div>
+            </div>
+          </div>
+          <div id="txUploadForm"></div>
+        </section>
+
+        <section>
+          <div class="page-hd">
+            <h2>갱신·점검</h2>
+          </div>
+          <div class="grid grid-3">
+            <div class="tile">
+              <div class="t">시세 갱신</div>
+              <div class="d">보유종목 현재가와 환율을 다시 수집합니다.</div>
+              <div class="a"><button class="refresh" id="btnRefresh">갱신</button></div>
+            </div>
+            <div class="tile">
+              <div class="t">자산 추이 채우기</div>
+              <div class="d">최초 거래월부터 <b>월말 순자산</b>을 과거 시세로 역산합니다. 수십 초 걸립니다.</div>
+              <div class="a"><button class="refresh" id="btnBackfill">채우기</button></div>
+            </div>
+            <div class="tile">
+              <div class="t">데이터 검증</div>
+              <div class="d">계산 예수금과 브로커 예수금의 차이. 차이가 나면 파싱 누락 신호입니다.</div>
+              <div class="a"><button class="refresh" id="btnReconcile">대사 실행</button></div>
+            </div>
+          </div>
+          <div id="reconcileBox" style="margin-top:var(--sp-3);overflow-x:auto"></div>
+        </section>
+
+        <section>
+          <div class="page-hd">
+            <h2>내보내기</h2>
+            <span class="sub">소유자·계좌 요약 + 거래내역 + 원본거래</span>
+            <span class="acts">
+              <button class="refresh" id="btnExport">xlsx 내려받기</button>
+              <button class="pill-reset" id="btnExportSave" title="같은 양식을 서버에 데이터 해시와 함께 보관합니다(무결성·중복확인용)">서버에 저장</button>
+            </span>
+          </div>
+          <div id="exportSaveResult" class="muted" style="font-size:var(--fs-xs)"></div>
+        </section>
+      </div>
+      </div>
+
+      <div class="subpanel" data-sub="danger" style="display:none">
+        <div class="grid grid-2">
+          <div class="tile warn">
+            <div class="t">거래내역 전체 초기화</div>
+            <div class="d">거래내역·계좌·보유를 <b>전부 삭제</b>합니다. 로그인·시세·부동산은 남습니다.
+              <b style="color:var(--gain)">되돌릴 수 없습니다.</b></div>
+            <div class="a"><button id="resetLedger" class="pill-reset" style="color:var(--gain);border-color:color-mix(in srgb,var(--gain) 45%,var(--line-strong))">초기화</button></div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+    </div><!-- /.content -->
+  </div><!-- /.app -->
+
+  <!-- 폰: 하단 탭바 4칸 + 더보기 시트 -->
+  <nav class="tabbar" id="tabBar">
+    <button data-view="dashboard" class="active"><span class="ico">◈</span>현황</button>
+    <button data-view="assets"><span class="ico">▤</span>자산</button>
+    <button data-view="tx"><span class="ico">⇄</span>거래</button>
+    <button id="moreBtn"><span class="ico">☰</span>더보기</button>
+  </nav>
+  <div class="tabbar-more" id="tabMore">
+    <div class="sheet">
+      <div class="grip"></div>
+      <div class="nav-label">기록</div>
+      <button class="nav-item" data-view="invest"><span class="ico">◪</span>투자내역</button>
+      <button class="nav-item" data-view="trade"><span class="ico">⚡</span>매매</button>
+      <div class="nav-label">살펴보기</div>
+      <button class="nav-item" data-view="analysis"><span class="ico">◐</span>분석</button>
+      <button class="nav-item" data-view="watch"><span class="ico">☆</span>관심종목/매물</button>
+      <div class="nav-label">그 밖에</div>
+      <button class="nav-item" data-view="admin" id="tabAdminM" style="display:none"><span class="ico">⚙</span>설정</button>
+    </div>
+  </div>
+
+  <div id="modal" class="modal-back hidden">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-hd"><span id="modalTitle"></span><button id="modalX" class="modal-x" aria-label="닫기">✕</button></div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="busy" id="busy"><span class="busy-dot"></span>반영중…</div>
+  <script src="static/app.js?v=20260826c"></script>
+</body>
+</html>

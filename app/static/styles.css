@@ -1,0 +1,250 @@
+
+@font-face {
+  font-family: "Pretendard Variable"; font-weight: 45 920; font-display: swap; font-style: normal;
+  src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2/PretendardVariable.woff2") format("woff2-variations");
+}
+
+/* ── 자산 배분 ── */
+.alloc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: var(--sp-3); }
+.alloc { padding: var(--sp-4); }
+
+.legend { margin-top: var(--sp-3); display: flex; flex-direction: column; gap: 6px; }
+.lg { font-size: var(--fs-xs); color: var(--ink-2); }
+
+/* ── 실물자산 · 토글 · 경제지표 ── */
+.owned-net { font-size: var(--fs-md); margin-bottom: var(--sp-2); }
+.owned-row { display: flex; justify-content: space-between; font-size: var(--fs-sm); padding: 6px 0; border-top: 1px solid var(--line); }
+
+.toggle-link { font-weight: 500; font-size: var(--fs-xs); margin-left: var(--sp-2); }
+.toggle-link a { color: var(--accent); cursor: pointer; }
+.macro-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: var(--sp-3); }
+
+.owner-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
+  padding: var(--sp-4); }
+
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable:hover { color: var(--ink-2); }
+
+.acct-block { margin-bottom: var(--sp-4); }
+
+ 
+ 
+ 
+
+ 
+
+/* ── 부동산 ── */
+.re-form { display: flex; flex-wrap: wrap; gap: var(--sp-2); padding: 0 var(--sp-4) var(--sp-4); align-items: center; }
+.re-form input { min-width: 120px; }
+.re-form input#wApt { min-width: 160px; }
+.watch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: var(--sp-3); margin-bottom: 6px; }
+.watch-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: var(--sp-4); position: relative; }
+
+.watch-card .meta { color: var(--muted); font-size: var(--fs-xs); margin: 2px 0 var(--sp-2); }
+.watch-card .price-row { display: flex; justify-content: space-between; font-size: var(--fs-sm); padding: 3px 0; }
+
+.watch-card .diff { font-size: var(--fs-xs); font-weight: 600; }
+
+.busy-dot { width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--muted); border-top-color: transparent;
+  animation: busy-spin .7s linear infinite; }
+
+.caret { display: inline-block; width: 1em; color: var(--muted); font-size: var(--fs-2xs); }
+
+tr.fill td { background: color-mix(in srgb, var(--muted) 6%, var(--surface)); }
+tr.mv-edit > td { background: var(--surface-2); border-bottom: 2px solid var(--line-strong); }
+#txAddForm .re-form, #mAddForm .re-form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+tr.fill input.edit-in { width: 64px; padding: 2px 6px; text-align: right; font: inherit; font-size: var(--fs-xs);
+  box-sizing: border-box; border: 1px solid var(--accent); border-radius: 6px; }
+
+.ms-empty { padding: var(--sp-3); color: var(--muted); font-size: var(--fs-xs); text-align: center; }
+
+.date-sep { color: var(--muted); margin: 0 6px; }
+
+.ac-name { font-weight: 600; }
+.ac-meta { color: var(--muted); font-size: var(--fs-xs); }
+
+#modalBody .kpis { grid-template-columns: repeat(3, 1fr); margin-bottom: var(--sp-3); }
+
+/* 시장 스트립(가로 스크롤 티커) */
+.ticker { display: flex; gap: var(--sp-5); overflow-x: auto; scrollbar-width: none;
+  padding: 9px var(--sp-4); margin-bottom: var(--sp-4);
+  border: 1px solid var(--line); border-radius: var(--r); background: var(--surface);
+  font-size: var(--fs-sm); }
+.ticker::-webkit-scrollbar { display: none; }
+
+ 
+
+/* 순자산 히어로 */
+.hero { position: relative; border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--surface); padding: 22px 24px 10px; margin-bottom: var(--sp-3);
+  overflow: hidden; }
+.hero::before { content: ""; position: absolute; inset: 0; background: var(--hero-glow); pointer-events: none; }
+.hero-top { position: relative; display: flex; justify-content: space-between; align-items: flex-start; gap: var(--sp-4); flex-wrap: wrap; }
+.hero .figure { font-weight: 800; letter-spacing: -.035em; font-size: clamp(32px, 5.5vw, 52px); line-height: 1.03; margin: 6px 0 2px; }
+.hero .figure .won { font-size: .4em; font-weight: 700; color: var(--ink-2); margin-left: 5px; letter-spacing: 0; }
+.chg { display: inline-flex; align-items: center; gap: 9px; margin-top: 6px; font-weight: 600; font-size: var(--fs-md); }
+.chg .cbadge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--gain) 15%, transparent); color: var(--gain); }
+.chg .csub { color: var(--muted); font-weight: 500; }
+.ranges { position: relative; display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--line-strong);
+  border-radius: var(--r-full); background: var(--surface-2); }
+.ranges button { border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 700; font-size: var(--fs-sm);
+  padding: 5px 12px; border-radius: var(--r-full); cursor: pointer; }
+.chartbox { position: relative; margin-top: 8px; height: 190px; }
+.chartbox canvas { width: 100%; height: 100%; display: block; }
+.navtip { position: absolute; pointer-events: none; opacity: 0; transform: translate(-50%, -8px); transition: opacity .12s;
+  background: var(--surface-3); border: 1px solid var(--line-strong); border-radius: 9px; padding: 6px 9px;
+  font-size: var(--fs-xs); white-space: nowrap; box-shadow: var(--shadow-lg); z-index: 3; }
+
+/* 대시보드 2단 그리드 */
+
+/* 배분 도넛 */
+.alloc-donut { display: flex; gap: var(--sp-5); align-items: center; padding: var(--sp-4); }
+.donut { position: relative; width: 148px; height: 148px; flex: none; }
+.donut canvas { width: 100%; height: 100%; }
+
+.legend2 { flex: 1; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+
+ 
+
+/* 보유 리스트(요약) */
+.holds { padding: 6px 8px 10px; }
+.h-row { display: grid; grid-template-columns: 34px 1.35fr 1fr auto; gap: 12px; align-items: center; padding: 9px; border-radius: var(--r-sm); }
+.h-row:hover { background: var(--surface-2); }
+.h-ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-weight: 700; font-size: var(--fs-sm); color: var(--accent-on); }
+.h-nm { min-width: 0; }
+
+.h-tag { font-size: var(--fs-2xs); padding: 1px 6px; border-radius: 5px; background: var(--surface-3); color: var(--ink-2); font-weight: 700; }
+.wbar { height: 6px; border-radius: var(--r-full); background: var(--surface-3); overflow: hidden; }
+.wbar > i { display: block; height: 100%; border-radius: var(--r-full); background: linear-gradient(90deg, var(--accent), var(--accent-ink)); }
+.wpct { font-size: var(--fs-2xs); color: var(--muted); font-weight: 600; margin-top: 5px; }
+.h-val { text-align: right; } .h-val .g { font-size: var(--fs-xs); font-weight: 700; margin-top: 2px; }
+
+/* 소유자 행 */
+.owners { padding: 6px 8px 8px; }
+.own { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: var(--r-sm); }
+.own:hover { background: var(--surface-2); }
+
+ 
+  
+
+/* 월별 배당 미니바 */
+.dbars { display: flex; align-items: flex-end; gap: 6px; height: 84px; }
+
+@media (max-width: 860px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── 반응형: 모바일 ── */
+@media (max-width: 640px) {
+  
+  
+  
+  
+  
+  
+  
+  .kpis { grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
+  
+    
+  
+  
+  
+  
+}
+
+/* 계좌간 이체 합치기: 선택된 첫 다리 강조 */
+#mTable tr.xfer-pending td { background: rgba(245,158,11,.20); }
+
+/* 계좌 뷰: 예수금·현금성 행(종목과 구분) */
+#accountsList tbody tr.cash-row td { background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
+#accountsList tbody tr.cash-row:first-of-type td { border-top: 1px solid var(--line-strong); }
+
+/* 계좌 → 거래내역 드릴다운 링크 */
+.acct-drill { color: inherit; cursor: pointer; text-decoration: none; border-bottom: 1px dashed transparent; }
+.acct-drill:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* 다중선택 메뉴의 그룹 머리글 — 증권사명 아래에 그 증권사 계좌번호들이 들어간다. */
+.ms-menu .ms-head {
+  padding: 6px 10px 2px; font-size: var(--fs-2xs); font-weight: 700;
+  color: var(--muted); letter-spacing: -.01em;
+}
+.ms-menu .ms-head ~ .ms-opt { padding-left: 18px; }   /* 머리글이 있는 메뉴만 들여쓴다 */
+
+/* ── 자산내역 — 요약 먼저, 줄은 접어 두고 필요한 것만 펼친다 ─────────────── */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: var(--sp-3) 2px var(--sp-2); }
+.chip {
+  font: inherit; font-size: var(--fs-xs); font-weight: 600; cursor: pointer;
+  height: 30px; padding: 0 12px; border-radius: 999px;
+  color: var(--ink-2); background: var(--surface); border: 1px solid var(--line);
+}
+
+.asset-sum { padding: var(--sp-4) var(--sp-5); }
+.asset-net { display: flex; align-items: baseline; gap: var(--sp-3); }
+.asset-net .l { font-size: var(--fs-xs); color: var(--muted); font-weight: 600; }
+.asset-net b { font-size: var(--fs-2xl); letter-spacing: -.02em; }
+.asset-bar { display: flex; height: 10px; border-radius: 999px; overflow: hidden;
+  background: var(--surface-3); margin: var(--sp-3) 0 var(--sp-2); }
+.asset-bar .seg { display: block; }
+.s-fin { background: var(--accent); }
+.s-real { background: var(--gold); }
+.s-debt { background: var(--loss); }
+.asset-legend { display: flex; flex-wrap: wrap; gap: var(--sp-4); font-size: var(--fs-xs); color: var(--ink-2); }
+.asset-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; }
+
+.asset-sec { margin-top: var(--sp-5); }
+.asset-sec-hd { display: flex; align-items: baseline; justify-content: space-between;
+  font-size: var(--fs-sm); font-weight: 700; color: var(--ink-2); margin: 0 2px var(--sp-2); }
+.asset-row { background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; margin-bottom: 6px; overflow: hidden; }
+.asset-hd { display: grid; grid-template-columns: 14px minmax(0,1.1fr) minmax(0,1.2fr) 120px auto;
+  align-items: center; gap: var(--sp-3); padding: 11px var(--sp-4); cursor: pointer; }
+.asset-hd .caret { color: var(--muted); font-size: var(--fs-2xs); transition: transform .12s; }
+.asset-row.open .caret { transform: rotate(90deg); }
+.asset-hd .a-nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.asset-hd .a-nm .acct-drill { font-size: var(--fs-2xs); font-weight: 500; margin-left: 6px; }
+.asset-hd .a-sub { font-size: var(--fs-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.asset-hd .a-bar { height: 6px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.asset-hd .a-bar i { display: block; height: 100%; background: var(--accent); opacity: .55; }
+.asset-hd .a-val { font-weight: 700; text-align: right; white-space: nowrap; }
+.asset-detail { display: none; padding: 0 var(--sp-4) var(--sp-3); border-top: 1px solid var(--line); }
+.asset-row.open .asset-detail { display: block; }
+.asset-note { font-size: var(--fs-xs); color: var(--ink-2); padding-top: var(--sp-3); }
+@media (max-width: 760px) {
+  .asset-hd { grid-template-columns: 14px minmax(0,1fr) auto; }
+  .asset-hd .a-sub, .asset-hd .a-bar { display: none; }
+}
+
+/* 자산/부채 구분 토글 + 실거래가 연결 줄 */
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px;
+  overflow: hidden; margin-bottom: 10px; }
+.seg button { font: inherit; font-size: var(--fs-xs); font-weight: 600; cursor: pointer;
+  height: 30px; padding: 0 16px; border: 0; background: var(--surface); color: var(--ink-2); }
+.re-tag { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  font-size: var(--fs-2xs); font-weight: 600;
+  color: var(--accent-ink); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+
+/* 폰: 카드·차트가 화면 폭을 넘지 않게 */
+@media (max-width: 860px) {
+  .kpis { grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); }
+  .alloc-grid { grid-template-columns: minmax(0, 1fr); }
+  canvas { max-width: 100%; }
+  .asset-hd { grid-template-columns: 14px minmax(0, 1fr) auto; }
+  .asset-hd .a-sub, .asset-hd .a-bar { display: none; }
+}
+
+/* 환전 요약 */
+.fx-card { padding: var(--sp-4) var(--sp-5); }
+.fx-main { display: flex; flex-wrap: wrap; gap: var(--sp-6); align-items: baseline; }
+.fx-main .l { display: block; font-size: var(--fs-2xs); color: var(--muted); font-weight: 600; }
+.fx-main b { font-size: var(--fs-xl); letter-spacing: -.02em; }
+.fx-sub { display: flex; flex-wrap: wrap; gap: var(--sp-5); margin-top: var(--sp-3);
+  font-size: var(--fs-xs); color: var(--ink-2); }
+
+/* 종목별 손익 요약 */
+.pnl-sum { display: flex; flex-wrap: wrap; gap: var(--sp-6); padding: var(--sp-4) var(--sp-5); }
+.pnl-sum .l { display: block; font-size: var(--fs-2xs); color: var(--muted); font-weight: 600; }
+.pnl-sum b { font-size: var(--fs-xl); letter-spacing: -.02em; }
+.pnl-sum .pnl-total { margin-left: auto; text-align: right; }
+.pnl-sum .pnl-total b { font-size: var(--fs-2xl); }

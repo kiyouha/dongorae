@@ -1,0 +1,29 @@
+# 비밀키 (네이버 로그인·MOLIT·KIS)
+.env
+**/.env
+
+# 개인 금융 데이터 (증권사 거래내역) — 커밋 금지
+data/inbox/*.csv
+!data/inbox/README.md
+data/samples/
+data/_last_upload.csv
+# 자동 적재 폴더 — 실거래 파일·매니페스트 커밋 금지(README만 추적)
+data/imports/**
+!data/imports/README.md
+data/exports/
+
+# DB·로그·캐시
+**/*.db
+# 런타임 로그 (refresh·imports·docs·trade)
+**/*.log
+**/__pycache__/
+*.pyc
+.DS_Store
+**/.DS_Store
+
+# 사용자 공유폴더(개인 문서·거래파일). NAS /volume2/goraes 자리.
+files/
+
+# 예전 iOS 앱 빌드 산출물(이 저장소 히스토리에 남아있음)
+DerivedData/
+DerivedDataLocal/

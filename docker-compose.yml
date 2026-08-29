@@ -1,0 +1,159 @@
+name: dongorae
+
+# dongorae 단독 스택 — 이 맥(Server/dongorae)에서 직접 운영한다.
+# 예전 goraes 스택(NAS)에서 dongorae + 로그인(auth-server)만 떼어낸 구성.
+#   브라우저 → gateway(:8000) → [로그인·승인 확인: auth-app] → don-app
+# docgorae(문서)·rakgorae는 가져오지 않았다.
+services:
+  don-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: don
+      POSTGRES_PASSWORD: don
+      POSTGRES_DB: don
+      TZ: Asia/Seoul
+    volumes:
+      - don_pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"        # 외부 DB 클라이언트용(선택)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U don"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - don-net
+
+  don-app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://don:don@don-db:5432/don
+      MOLIT_SERVICE_KEY: ${MOLIT_SERVICE_KEY:-}
+      AUTH_URL: http://auth-app:8000     # 우상단 프로필용 (auth /api/me 프록시)
+      # 자동매매(KIS). 자격증명은 루트 .env에서 주입, vts=모의투자 기본.
+      KIS_ENV: ${KIS_ENV:-vts}
+      KIS_APPKEY: ${KIS_APPKEY:-}
+      KIS_APPSECRET: ${KIS_APPSECRET:-}
+      KIS_ACCOUNT: ${KIS_ACCOUNT:-}
+      KIS_ALLOW_LIVE: ${KIS_ALLOW_LIVE:-}
+      FILES_DIR: /app/files             # 거래내역 import/export·보험 문서 공유폴더
+      TZ: Asia/Seoul
+    volumes:
+      - ./data:/app/data                # 거래내역(inbox)·symbols·로그를 호스트와 공유
+      - ./files:/app/files              # NAS /volume2/goraes 자리 — 이 맥의 ./files
+    depends_on:
+      don-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - don-net
+      - dongorae-net
+
+  don-scheduler:
+    build: .
+    command: ["./cron_entrypoint.sh"]   # crontab 참고(07:00 시세·스냅샷 등)
+    environment:
+      DATABASE_URL: postgresql://don:don@don-db:5432/don
+      MOLIT_SERVICE_KEY: ${MOLIT_SERVICE_KEY:-}
+      FILES_DIR: /app/files             # cron import 스캔이 공유폴더 거래내역/import를 보게
+      KIS_ENV: ${KIS_ENV:-vts}          # cron trade-tick가 실시간 시세/주문 쓰려면 필요
+      KIS_APPKEY: ${KIS_APPKEY:-}
+      KIS_APPSECRET: ${KIS_APPSECRET:-}
+      KIS_ACCOUNT: ${KIS_ACCOUNT:-}
+      KIS_ALLOW_LIVE: ${KIS_ALLOW_LIVE:-}
+      TZ: Asia/Seoul
+    volumes:
+      - ./data:/app/data
+      - ./files:/app/files
+    depends_on:
+      don-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - don-net
+
+  auth-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: auth
+      POSTGRES_PASSWORD: auth
+      POSTGRES_DB: auth
+      TZ: Asia/Seoul
+    volumes:
+      - auth_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - auth-net
+
+  auth-app:
+    build: ./auth-server
+    environment:
+      DATABASE_URL: postgresql://auth:auth@auth-db:5432/auth
+      AUTH_BASE_URL: ${AUTH_BASE_URL:-http://localhost:8000}   # 네이버 콜백 URL 구성용
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-0}
+      TZ: Asia/Seoul
+    ports:
+      - "127.0.0.1:8001:8000"          # 직접 확인용(정상 접속은 게이트웨이 :8000)
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - auth-net
+      - dongorae-net
+
+  # 단일 진입 게이트웨이 (:8000). 로그인 세션(sid)을 쥐고 /don/ 을 auth 뒤로 보호.
+  gateway:
+    image: nginx:alpine
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./shared:/srv/shared:ro          # 공통 디자인(base.css)
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:8000:80" # http://localhost:8000 (집 안 다른 기기도 접속)
+    depends_on:
+      - auth-app
+      - don-app
+    restart: unless-stopped
+    networks:
+      - dongorae-net
+
+  # DB 뷰어. 평소엔 안 뜬다: docker compose --profile tools up -d pgadmin
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    profiles: ["tools"]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@goraes.com
+      PGADMIN_DEFAULT_PASSWORD: portfolio
+    volumes:
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "127.0.0.1:5050:80"            # pgAdmin: http://localhost:5050
+    restart: unless-stopped
+    networks:                          # 각 서비스 사설망에 붙어야 *-db 에 접근 가능
+      - dongorae-net
+      - don-net
+      - auth-net
+
+networks:
+  dongorae-net:
+    name: dongorae-net
+  don-net:
+    name: don-net
+  auth-net:
+    name: auth-net
+
+volumes:
+  don_pgdata:
+    name: dongorae_don_pgdata   # NAS와 같은 이름 — 나중에 볼륨을 옮겨 붙일 수 있게
+  auth_pgdata:
+    name: dongorae_auth_pgdata
+  pgadmin_data:

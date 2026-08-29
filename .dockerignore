@@ -1,0 +1,13 @@
+# 앱 이미지에 들어갈 것만 남기고 전부 제외한다(빌드 컨텍스트 최소화).
+# Dockerfile이 COPY 하는 것: requirements.txt, app/, cli.py, entrypoint.sh, cron_entrypoint.sh, crontab
+*
+!requirements.txt
+!app/
+!cli.py
+!entrypoint.sh
+!cron_entrypoint.sh
+!crontab
+
+**/__pycache__
+**/*.pyc
+**/.DS_Store
