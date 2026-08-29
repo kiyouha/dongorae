@@ -4,7 +4,9 @@
 코드 수정 → `./manage.sh build` → 바로 반영. (NAS로 배포하던 tar-over-ssh 흐름은 없어졌다)
 
 - 접속: `http://localhost:8000` (게이트웨이) → 네이버 로그인 → 돈고래 `/don/`
-- 집 안 다른 기기: `http://192.168.0.121:8000` (`.env`의 `AUTH_BASE_URL`·`BIND_ADDR` 참고)
+- 집 안 다른 기기: `http://192.168.0.121:8000`
+- **외부(인터넷)**: `http://1.240.143.16:9876` — 공유기 포워딩 9876 → 이 맥 8000. 네이버 콜백·`AUTH_BASE_URL`이 이 주소 기준이다.
+  ⚠ 공인 IP(1.240.143.16)가 바뀌면 `.env`의 `AUTH_BASE_URL`과 네이버 콜백을 같이 고쳐야 한다.
 - auth 직접: `http://localhost:8001` · pgAdmin: `http://localhost:5050` (`./manage.sh pgadmin`)
 
 ## manage.sh (리포 루트에서)

@@ -298,7 +298,7 @@ PostgreSQL + FastAPI(gunicorn) + nginx + cron. 서비스: **dongorae**(앱), **d
 - **업로드계좌 시점잔액 음수 가능**: 개시 예수금·환전분이 movements에 없으면 과거 현금/USD 음수로 보일 수 있음(한계). 수동계좌·조정은 정확.
 - **가족 로그인 = 네이버 앱 '개발중'이면 멤버관리(테스트계정) 등록된 ID만** 로그인 가능. 김숙진 등은 네이버 콘솔 멤버관리 추가 or 검수 필요.
 - **DB가 비어 있음(2026-08-29)** — owners/accounts/transactions/users 전부 0. 첫 네이버 로그인 사용자가 자동 관리자가 되고, 그 뒤 설정 탭에서 계좌·거래내역을 재등록해야 화면이 채워진다. 소유주 파일은 `data/imports/{영한,숙진,휘동}/`·`data/exports/`에 그대로 있다.
-- **외부 접속 미설정** — NAS의 DDNS+HTTPS(kiyouha.synology.me) 경로는 따라오지 않았다. 공유기 포트포워딩(외부 8000 → 192.168.0.121:8000) + 네이버 콜백 등록이 필요하고, 평문 HTTP라 `COOKIE_SECURE=0`을 유지해야 한다(HTTPS를 앞에 두면 1).
+- **외부 접속 = 평문 HTTP** — `http://1.240.143.16:9876`(공유기 9876 → 맥 8000, 헤어핀 NAT 동작 확인). NAS의 DDNS+HTTPS(kiyouha.synology.me)는 따라오지 않았다. **공인 IP가 바뀌면 `.env` `AUTH_BASE_URL` + 네이버 콜백을 같이 고쳐야 한다** — DDNS로 옮기면 없어질 문제. 평문이라 `COOKIE_SECURE=0` 유지 필수(HTTPS 앞에 두면 1).
 - **이제 본체 = 이 맥**. Docker Desktop이 떠 있어야 하고, **맥이 잠들면 cron(시세·import 스캔·매매 평가)이 그 시간 건너뜀** → 상시 운영하려면 잠자기 해제. NAS 스택은 아직 남아 있으므로 **이중 가동 주의**(같은 네이버 앱·같은 데이터원본).
 - 변환거래(origin=tx) 수정하면 원본 tx 삭제+수동승격(설계됨) → 재업로드 부활은 tombstone으로 차단(Done 참조). 옛 투자·가계부 탭 뷰는 DOM에 남아있으나 탭 버튼만 제거(msInit 등 안 깨지게).
 - 자산추이 스냅샷 매일 누적돼야 그래프. 부동산 서울만. data.go.kr Accept:*/* 필수.
@@ -308,7 +308,7 @@ PostgreSQL + FastAPI(gunicorn) + nginx + cron. 서비스: **dongorae**(앱), **d
 콜백이 안 맞아 로그인이 튕기면 `.env`의 `AUTH_BASE_URL`을 네이버 개발자센터에 등록된 값과 똑같이 맞추고 `docker compose up -d auth-app`.
 
 이후 열린 것:
-1. **외부 접속** — 공유기에서 외부 8000 → 192.168.0.121:8000 포워딩(맥 IP는 DHCP 예약으로 고정), 네이버 콜백을 `http://<외부주소>:8000/auth/naver/callback`으로 등록하고 `AUTH_BASE_URL`도 같은 값으로.
+1. **~~외부 접속~~ 완료(2026-08-29)** — `http://1.240.143.16:9876` 포워딩·네이버 콜백·`AUTH_BASE_URL` 셋이 일치, `/auth/naver/login`의 redirect_uri 검증됨. 남은 건 **공인 IP 변동 대비(DDNS)**와 맥 LAN IP DHCP 예약.
 2. **잠자기 해제** — 맥이 자면 cron(07:00 시세·매분 import 스캔·장중 매매 평가)이 그 시간 건너뜀.
 3. **NAS 스택 종료 여부 결정** — 아직 NAS에 goraes 스택과 don DB가 그대로 있다. 이중 가동 중이면 한쪽을 내릴 것.
 4. **단타 실체결 검증**(이월) — 아래 이력 참조.

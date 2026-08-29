@@ -46,8 +46,13 @@ PostgreSQL + FastAPI(gunicorn/uvicorn) + nginx 게이트웨이 + 인증 서버. 
 | `MOLIT_SERVICE_KEY` | 국토부 실거래가·건축물대장 (data.go.kr) |
 | `KIS_*` | 한국투자증권 자동매매. `KIS_ENV=vts`(모의)가 기본, 실주문은 `KIS_ALLOW_LIVE=1` 필요 |
 
+현재 설정: `AUTH_BASE_URL=http://1.240.143.16:9876` — 공유기가 **외부 9876 → 192.168.0.121:8000**으로 포워딩하고,
+같은 주소가 네이버 콜백(`/auth/naver/callback`)으로 등록돼 있다. 헤어핀 NAT가 되어 집 안에서도 같은 주소로 들어간다.
+
 > ⚠️ `AUTH_BASE_URL`을 바꾸면 **네이버 개발자센터의 Callback URL도 같은 값으로 등록**해야 로그인이 된다.
-> 맥 IP가 DHCP로 바뀌면 공유기에서 IP를 고정해 두는 게 편하다.
+> 공인 IP는 고정이 아니다 — 바뀌면 `.env`와 네이버 콜백을 같이 고쳐야 한다(DDNS를 쓰면 이 문제가 없다).
+> 맥 LAN IP(192.168.0.121)도 DHCP 예약으로 고정해 둘 것 — 바뀌면 포워딩이 깨진다.
+> 평문 HTTP로 인터넷에 열려 있으므로 `COOKIE_SECURE=0`을 유지해야 로그인이 된다(HTTPS를 앞에 두면 1).
 
 ## 거래내역 넣기
 
