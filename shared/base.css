@@ -665,6 +665,18 @@ details.help .help-body b { color: var(--ink); font-weight: var(--w-semi); }
 .chart-legend .ln.dash { opacity: .65; }
 
 /* 계좌 관리 — 한 계좌가 한 줄. 라벨은 첫 줄에만 보이면 되지만, 접히는 화면을 위해 다 둔다. */
+/* 계좌 관리 — 계좌명(alias)으로 묶은 덩이. 머리줄이 그 묶음의 이름·계좌 수·소유자를 말한다. */
+.acct-group { margin-bottom: var(--sp-4); }
+.acct-group-hd {
+  display: flex; align-items: baseline; gap: var(--sp-2) var(--sp-3); flex-wrap: wrap;
+  padding: 0 2px var(--sp-2);
+}
+.acct-group-hd .g-name { font-size: var(--fs-md); font-weight: var(--w-semi); color: var(--ink); }
+.acct-group-hd .g-meta { font-size: var(--fs-xs); color: var(--muted); }
+.acct-group-hd .g-hint { font-size: var(--fs-2xs); color: var(--muted); margin-left: auto; }
+.acct-group-hd .acct-drill { margin-left: auto; font-size: var(--fs-xs); }
+.acct-group.noname .g-name { color: var(--ink-2); font-weight: var(--w-med); }
+
 .acctmgr-row {
   display: grid; gap: var(--sp-2); align-items: end; margin-bottom: var(--sp-2);
   grid-template-columns: 96px minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1.1fr) auto;

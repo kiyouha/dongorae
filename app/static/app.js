@@ -1998,20 +1998,56 @@ async function famUserAct(id, op) {
   const r = await api("api/family/user-action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: +id, op, owner }) });
   if (r && r.ok) { toast("적용됨"); loadFamily(); } else toast((r && r.error) || "실패");
 }
-async function loadAcctMgr() {   // 등록 계좌 편집(계좌번호·계좌명·증권사)
+async function loadAcctMgr() {   // 등록 계좌 편집 — 계좌명(alias)으로 묶어 본다.
   if (!metaAccounts.length) await loadMeta();
-  const bOpts = (sel) => Object.entries(BROKER_NAME).map(([k, v]) => `<option value="${k}"${k === sel ? " selected" : ""}>${esc(v)}</option>`).join("");
-  $("#acctMgr").innerHTML = metaAccounts.length ? metaAccounts.map(a =>
-    `<div class="acctmgr-row" data-id="${a.id}">
-      <div class="field"><label>소유자</label><div class="static-val">${esc(a.owner_name || "")}</div></div>
-      <div class="field"><label>증권사</label><select class="amBroker">${bOpts(a.brokerage)}</select></div>
-      <div class="field"><label>계좌번호</label><input class="amNo" value="${esc(a.account_no || "")}"></div>
-      <div class="field"><label>계좌명</label><input class="amAlias" value="${esc(a.alias || "")}"></div>
-      <div class="acct-acts">
-        <button type="button" class="mini amSave">저장</button>
-        <a class="stock-link acct-drill" data-accts="${a.id}" title="이 계좌 거래내역">거래</a>
-      </div>
-    </div>`).join("") : `<div class="blank" style="padding:20px"><div class="t">등록된 계좌가 없습니다</div><div class="d">위 '+ 계좌 추가'로 등록하세요.</div></div>`;
+  const box = $("#acctMgr"); if (!box) return;
+  if (!metaAccounts.length) {
+    box.innerHTML = `<div class="blank" style="padding:20px"><div class="t">등록된 계좌가 없습니다</div>
+      <div class="d">위 '+ 계좌 추가'로 등록하세요.</div></div>`;
+    return;
+  }
+  const bOpts = (sel) => Object.entries(BROKER_NAME).map(([k, v]) =>
+    `<option value="${k}"${k === sel ? " selected" : ""}>${esc(v)}</option>`).join("");
+
+  // 같은 목적의 계좌가 증권사·소유자별로 흩어져 있어도 한 덩이로 보이게 계좌명으로 묶는다.
+  // 계좌명은 각 줄에서 고칠 수 있고, 고쳐 저장하면 그 계좌가 다른 묶음으로 옮겨간다.
+  const NO_ALIAS = "\u0000";
+  const groups = new Map();
+  for (const a of metaAccounts) {
+    const k = (a.alias || "").trim() || NO_ALIAS;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(a);
+  }
+  const keys = [...groups.keys()].sort((x, y) =>
+    (x === NO_ALIAS) - (y === NO_ALIAS) || x.localeCompare(y, "ko"));
+  const aliasList = keys.filter(k => k !== NO_ALIAS);
+
+  box.innerHTML = `<datalist id="acctAliasList">${aliasList.map(k => `<option value="${esc(k)}"></option>`).join("")}</datalist>`
+    + keys.map(k => {
+      const list = groups.get(k).slice().sort((x, y) =>
+        (x.owner_name || "").localeCompare(y.owner_name || "", "ko")
+        || brokerName(x.brokerage).localeCompare(brokerName(y.brokerage), "ko"));
+      const owners = [...new Set(list.map(a => a.owner_name).filter(Boolean))];
+      const none = k === NO_ALIAS;
+      return `<div class="acct-group${none ? " noname" : ""}">
+        <div class="acct-group-hd">
+          <span class="g-name">${none ? "계좌명 없음" : esc(k)}</span>
+          <span class="g-meta">계좌 ${list.length}${owners.length ? " · " + owners.map(esc).join(", ") : ""}</span>
+          ${none ? `<span class="g-hint">계좌명을 넣으면 묶입니다</span>`
+                 : `<a class="stock-link acct-drill" data-accts="${list.map(a => a.id).join(",")}" title="이 계좌명의 거래내역 보기">거래</a>`}
+        </div>
+        ${list.map(a => `<div class="acctmgr-row" data-id="${a.id}">
+          <div class="field"><label>소유자</label><div class="static-val">${esc(a.owner_name || "")}</div></div>
+          <div class="field"><label>증권사</label><select class="amBroker">${bOpts(a.brokerage)}</select></div>
+          <div class="field"><label>계좌번호</label><input class="amNo" value="${esc(a.account_no || "")}"></div>
+          <div class="field"><label>계좌명</label><input class="amAlias" list="acctAliasList" value="${esc(a.alias || "")}" placeholder="예: 종합"></div>
+          <div class="acct-acts">
+            <button type="button" class="mini amSave">저장</button>
+            <a class="stock-link acct-drill" data-accts="${a.id}" title="이 계좌 거래내역">거래</a>
+          </div>
+        </div>`).join("")}
+      </div>`;
+    }).join("");
 }
 async function saveAcct(row) {
   const id = row.dataset.id;
