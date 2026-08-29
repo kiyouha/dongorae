@@ -2524,7 +2524,9 @@ function renderPnl() {
 
   const t = PNL.total, sum = k => rows.reduce((a, r) => a + r[k], 0);
   const cell = v => { const p = signed(Math.round(v)); return `<b class="num ${p.c}">${p.t}</b>`; };
+  const mv = rows.reduce((a, r) => a + (r.held ? (r.market_value || 0) * r.fx : 0), 0);
   $("#pnlSum").innerHTML = `<div class="card pnl-sum">
+    <div><span class="l">평가금액<span class="muted">(보유분)</span></span><b class="num">${won(Math.round(mv))}</b></div>
     <div><span class="l">실현손익</span>${cell(sum("realized_krw"))}</div>
     <div><span class="l">배당·이자</span>${cell(sum("dividend_krw"))}</div>
     <div><span class="l">평가손익<span class="muted">(보유분)</span></span>${cell(sum("unrealized_krw"))}</div>
@@ -2532,7 +2534,8 @@ function renderPnl() {
   </div>`;
 
   $("#pnlList").innerHTML = rows.length ? `<div class="card tablewrap"><table class="compact"><thead><tr>
-      <th>종목</th><th></th><th class="r">매수</th><th class="r">매도</th>
+      <th>종목</th><th></th><th class="r">현재가</th><th class="r">평가금액</th>
+      <th class="r">매수</th><th class="r">매도</th>
       <th class="r">실현손익</th><th class="r">배당</th><th class="r">평가손익</th><th class="r">합계</th>
       <th class="r">기간</th></tr></thead><tbody>${rows.map(r => {
     const nat = r.ccy !== "KRW";
@@ -2541,6 +2544,8 @@ function renderPnl() {
         nat ? ` <span class="muted">${esc(r.ccy)}</span>` : ""}</td>
       <td>${r.held ? `<span class="badge chip-in">보유 ${qtyFmt(r.qty)}</span>`
                    : `<span class="badge">정리</span>`}</td>
+      <td class="r num muted">${r.price ? money(r.price, r.ccy) : ""}</td>
+      <td class="r num">${r.held && r.market_value ? won(Math.round(r.market_value * r.fx)) : ""}</td>
       <td class="r num muted">${qtyFmt(r.buy_qty)}</td>
       <td class="r num muted">${qtyFmt(r.sell_qty)}</td>
       <td class="r num ${signed(r.realized_krw).c}">${signed(Math.round(r.realized_krw)).t}</td>
@@ -3506,13 +3511,16 @@ function applyReFilters() { reState.offset = 0; loadReTx(); }
 const VIEW_LOAD = {
   "view-assets": () => renderAssetList(),
   "view-tx": () => { if (!mState.loaded) { mState.loaded = true; loadMovementsTab(); } },
+  "view-stocks": () => loadPnl(),
+  "view-watch": () => { if (!reState.loaded) { reState.loaded = true; loadRealEstate(); } },
   "view-invest": () => { renderInvest(); loadFx(); },
   "view-trade": () => { if (!kisLoaded) { kisLoaded = true; loadKis(); } loadTrade(); },
 };
 
 const VIEW_TITLE = {
-  dashboard: "대시보드", assets: "자산내역", tx: "거래내역", invest: "투자내역",
-  trade: "매매", analysis: "분석", watch: "관심종목 · 매물", admin: "설정",
+  dashboard: "대시보드", assets: "자산내역", stocks: "종목", watchstock: "관심종목",
+  invest: "투자내역", trade: "매매", tx: "거래내역", analysis: "분석",
+  watch: "부동산", admin: "설정",
 };
 function activateTab(view) {   // 사이드바/탭바 활성 + 하위탭 있으면 현재/기본 하위탭 로드
   /* 사이드바(데스크톱)·하단탭바(폰)·더보기 시트가 같은 data-view를 쓴다 — 한 번에 맞춘다. */
@@ -3543,11 +3551,8 @@ function selectSub(bar, sub) {   // 하위탭 전환(뷰 내부에서만)
 function onSubShow(viewId, sub) {   // 하위탭 최초 표시 시 지연 로드
   const key = viewId + ":" + sub;
   if (viewId === "view-analysis") {
-    if (sub === "market") { renderAnalysis(); loadPnl(); }
+    if (sub === "market") renderAnalysis();
     else if (sub === "overseas") loadTax();
-  } else if (viewId === "view-watch") {
-    if (sub === "watchre") { if (!reState.loaded) { reState.loaded = true; loadRealEstate(); } }
-    // watchstock = 준비중(스켈레톤)
   } else if (viewId === "view-admin") {
     if (sub === "acctmgr") { renderAccounts(); loadAcctMgr(); loadOwnedMgr(); ownedSideFields(); debtKindFields(); }
     else if (sub === "alias") { symBindControls(); if (!_subLoaded[key]) { _subLoaded[key] = true; loadAliases(); } }

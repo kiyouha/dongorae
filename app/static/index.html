@@ -8,8 +8,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="static/img/icon-192.png?v=1">
   <link rel="apple-touch-icon" sizes="180x180" href="static/img/icon-180.png?v=1">
   <meta name="theme-color" content="#08090a">
-  <link rel="stylesheet" href="static/styles.css?v=20260830c">
-  <link rel="stylesheet" href="/shared/base.css?v=20260830c">
+  <link rel="stylesheet" href="static/styles.css?v=20260830d">
+  <link rel="stylesheet" href="/shared/base.css?v=20260830d">
 </head>
 <body>
   <div class="app">
@@ -24,15 +24,20 @@
         <button class="nav-item" data-view="assets"><span class="ico">▤</span>자산내역</button>
       </div>
       <div class="nav-group">
+        <div class="nav-label">투자</div>
+        <button class="nav-item" data-view="stocks"><span class="ico">◪</span>종목</button>
+        <button class="nav-item" data-view="watchstock"><span class="ico">☆</span>관심종목</button>
+        <button class="nav-item" data-view="invest"><span class="ico">▦</span>투자내역</button>
+        <button class="nav-item" data-view="trade"><span class="ico">⚡</span>매매</button>
+      </div>
+      <div class="nav-group">
         <div class="nav-label">기록</div>
         <button class="nav-item" data-view="tx"><span class="ico">⇄</span>거래내역</button>
-        <button class="nav-item" data-view="invest"><span class="ico">◪</span>투자내역</button>
-        <button class="nav-item" data-view="trade"><span class="ico">⚡</span>매매</button>
       </div>
       <div class="nav-group">
         <div class="nav-label">살펴보기</div>
         <button class="nav-item" data-view="analysis"><span class="ico">◐</span>분석</button>
-        <button class="nav-item" data-view="watch"><span class="ico">☆</span>관심종목/매물</button>
+        <button class="nav-item" data-view="watch"><span class="ico">⌂</span>부동산</button>
       </div>
         <div class="nav-group" style="margin-top:auto">
         <button class="nav-item" data-view="admin" id="tabAdmin" style="display:none"><span class="ico">⚙</span>설정</button>
@@ -143,6 +148,45 @@
             </div>
           </details>
         </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-stocks">
+      <div class="page">
+          <section>
+            <div class="page-hd">
+              <h2>종목</h2>
+              <span class="sub">거래한 적 있는 종목은 지금 안 들고 있어도 나옵니다</span>
+              <span class="acts">
+                <select id="pnlScope">
+                  <option value="">전체 종목</option>
+                  <option value="held">보유 중만</option>
+                  <option value="sold">정리한 것만</option>
+                </select>
+                <input type="search" id="pnlQ" placeholder="종목 검색" style="width:150px">
+                <span class="muted" id="pnlCount" style="font-size:var(--fs-xs)"></span>
+              </span>
+            </div>
+            <div id="pnlSum"></div>
+            <div id="pnlList"></div>
+          </section>
+
+      </div>
+    </section>
+
+    <section class="view" id="view-watchstock">
+      <div class="page">
+        <section>
+          <div class="page-hd">
+            <h2>관심종목</h2>
+            <span class="sub">아직 사지 않은 종목을 담아 두고 목표가와 견줍니다</span>
+          </div>
+          <div class="blank">
+            <div class="t">관심 종목 · 준비 중</div>
+            <div class="d">담아 둔 종목을 목표가와 견주는 자리입니다.
+              매수하면 거래내역에 넣는 것만으로 <b>종목</b>에 보유로 넘어갑니다.</div>
+          </div>
+        </section>
       </div>
     </section>
 
@@ -272,24 +316,6 @@
           <div class="stats" id="anKpis"></div>
 
           <section>
-            <div class="page-hd">
-              <h2>종목별 손익</h2>
-              <span class="sub">지금 안 들고 있는 종목도 나옵니다</span>
-              <span class="acts">
-                <select id="pnlScope">
-                  <option value="">전체 종목</option>
-                  <option value="held">보유 중만</option>
-                  <option value="sold">정리한 것만</option>
-                </select>
-                <input type="search" id="pnlQ" placeholder="종목 검색" style="width:150px">
-                <span class="muted" id="pnlCount" style="font-size:var(--fs-xs)"></span>
-              </span>
-            </div>
-            <div id="pnlSum"></div>
-            <div id="pnlList"></div>
-          </section>
-
-          <section>
             <div class="page-hd"><h2>자산 추이</h2></div>
             <div class="card pad"><div id="anNav"></div></div>
           </section>
@@ -321,10 +347,6 @@
     </section>
 
     <section class="view" id="view-watch">
-      <div class="tabs subtabs">
-        <button class="tab active subtab" data-sub="watchre">부동산</button>
-        <button class="tab subtab" data-sub="watchstock">종목</button>
-      </div>
       <div class="subpanel" data-sub="watchre">
         <div class="page">
           <section>
@@ -380,12 +402,6 @@
           </section>
         </div>
       </div>
-      <div class="subpanel" data-sub="watchstock" style="display:none">
-        <div class="blank">
-          <div class="t">관심 종목 · 준비 중</div>
-          <div class="d">아직 사지 않은 주식을 담아 두고 목표가와 비교하는 자리입니다.
-            매수하면 거래내역에 넣는 것만으로 보유 종목으로 넘어갑니다.</div>
-        </div>
       </div>
     </section>
 
@@ -720,12 +736,14 @@
   <div class="tabbar-more" id="tabMore">
     <div class="sheet">
       <div class="grip"></div>
-      <div class="nav-label">기록</div>
-      <button class="nav-item" data-view="invest"><span class="ico">◪</span>투자내역</button>
+      <div class="nav-label">투자</div>
+      <button class="nav-item" data-view="stocks"><span class="ico">◪</span>종목</button>
+      <button class="nav-item" data-view="watchstock"><span class="ico">☆</span>관심종목</button>
+      <button class="nav-item" data-view="invest"><span class="ico">▦</span>투자내역</button>
       <button class="nav-item" data-view="trade"><span class="ico">⚡</span>매매</button>
       <div class="nav-label">살펴보기</div>
       <button class="nav-item" data-view="analysis"><span class="ico">◐</span>분석</button>
-      <button class="nav-item" data-view="watch"><span class="ico">☆</span>관심종목/매물</button>
+      <button class="nav-item" data-view="watch"><span class="ico">⌂</span>부동산</button>
       <div class="nav-label">그 밖에</div>
       <button class="nav-item" data-view="admin" id="tabAdminM" style="display:none"><span class="ico">⚙</span>설정</button>
     </div>
@@ -740,6 +758,6 @@
 
   <div class="toast" id="toast"></div>
   <div class="busy" id="busy"><span class="busy-dot"></span>반영중…</div>
-  <script src="static/app.js?v=20260830c"></script>
+  <script src="static/app.js?v=20260830d"></script>
 </body>
 </html>
