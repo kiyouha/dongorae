@@ -149,6 +149,35 @@ def _finite(v):
     return f if f == f and abs(f) != float("inf") else None
 
 
+def _store_candles(conn, ticker, rows):
+    """(날짜, o,h,l,c,v) 목록을 저장하고 넣은 개수를 돌려준다."""
+    n = 0
+    for d, o, h, l, c, v in rows:
+        if c is None:
+            continue
+        conn.execute(
+            """INSERT INTO symbol_candles(ticker, d, o, h, l, c, v) VALUES (%s,%s,%s,%s,%s,%s,%s)
+               ON CONFLICT (ticker, d) DO UPDATE SET o=EXCLUDED.o, h=EXCLUDED.h,
+                 l=EXCLUDED.l, c=EXCLUDED.c, v=EXCLUDED.v""",
+            (ticker, d, o, h, l, c, v))
+        n += 1
+    return n
+
+
+def _fdr_candles(ticker, start=None):
+    """야후에 없는 종목(국내 소형 ETF 등)을 FinanceDataReader로 받는다.
+    평가용 시세를 이미 FDR로 받고 있어 새 의존성이 아니다. 배당·기업정보는 FDR에 없다."""
+    import FinanceDataReader as fdr
+    df = fdr.DataReader(ticker, start or "1990-01-01")
+    if df is None or not len(df):
+        return []
+    df = df.dropna(subset=["Close"])
+    col = lambda r, k: _finite(getattr(r, k, None))
+    return [(i.date().isoformat(), col(r, "Open"), col(r, "High"), col(r, "Low"),
+             _finite(r.Close), int(r.Volume) if _finite(getattr(r, "Volume", None)) else 0)
+            for i, r in df.iterrows() if _finite(r.Close) is not None]
+
+
 def refresh_one(conn, ticker, market="", full=False):
     """한 종목의 일봉·기업정보·배당을 받아 저장. full=True면 전체 이력, 아니면 증분."""
     t = (ticker or "").strip().upper()
@@ -161,24 +190,21 @@ def refresh_one(conn, ticker, market="", full=False):
 
         # 일봉 — 마지막으로 저장한 날 다음부터만 받는다(증분).
         last = conn.execute("SELECT max(d) AS d FROM symbol_candles WHERE ticker = %s", (t,)).fetchone()
+        start = None
         if full or not last or not last["d"]:
             hist = tk.history(period="max", interval="1d")
         else:
             start = (date.fromisoformat(last["d"]) - timedelta(days=5)).isoformat()   # 수정주가 반영분까지 다시
             hist = tk.history(start=start, interval="1d")
         hist = hist.dropna(subset=["Close"]) if "Close" in hist.columns else hist
-        n = 0
-        for i, r in hist.iterrows():
-            c = _finite(r.Close)
-            if c is None:
-                continue
-            conn.execute(
-                """INSERT INTO symbol_candles(ticker, d, o, h, l, c, v) VALUES (%s,%s,%s,%s,%s,%s,%s)
-                   ON CONFLICT (ticker, d) DO UPDATE SET o=EXCLUDED.o, h=EXCLUDED.h,
-                     l=EXCLUDED.l, c=EXCLUDED.c, v=EXCLUDED.v""",
-                (t, i.date().isoformat(), _finite(r.Open), _finite(r.High), _finite(r.Low),
-                 c, int(r.Volume) if _finite(r.Volume) else 0))
-            n += 1
+        n = _store_candles(conn, t, [
+            (i.date().isoformat(), _finite(r.Open), _finite(r.High), _finite(r.Low),
+             _finite(r.Close), int(r.Volume) if _finite(r.Volume) else 0)
+            for i, r in hist.iterrows()])
+        src = "yf"
+        if not n:                      # 야후에 없는 종목 → FDR로 받는다(국내 소형 ETF 등)
+            n = _store_candles(conn, t, _fdr_candles(t, None if full else start))
+            src = "fdr" if n else "none"
 
         # 배당 — pandas Series는 `or`로 못 가른다(진릿값이 모호하다).
         divs = tk.dividends
@@ -190,8 +216,12 @@ def refresh_one(conn, ticker, market="", full=False):
                        ON CONFLICT (ticker, pay_date) DO UPDATE SET amount = EXCLUDED.amount""",
                     (t, i.date().isoformat(), a))
 
-        # 기업정보
-        info = tk.info or {}
+        # 기업정보 — 야후에 없는 종목이면 비어 온다. 그래도 행은 남겨
+        # yf_symbol·갱신시각을 적어 두고, 다음 갱신 때 헛수고를 줄인다.
+        try:
+            info = tk.info or {}
+        except Exception:
+            info = {}
         ex = info.get("exDividendDate")
         if isinstance(ex, (int, float)):
             ex = datetime.fromtimestamp(ex, timezone.utc).date().isoformat()
@@ -216,7 +246,7 @@ def refresh_one(conn, ticker, market="", full=False):
              _finite(info.get("fiftyTwoWeekHigh")), _finite(info.get("fiftyTwoWeekLow")),
              (info.get("longBusinessSummary") or "")[:600] or None, info.get("website")))
         conn.commit()
-        return {"ticker": t, "candles": n}
+        return {"ticker": t, "candles": n, "source": src}
     except Exception as e:
         conn.rollback()
         conn.execute(
