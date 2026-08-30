@@ -236,8 +236,51 @@ SCHEMA = [
         currency TEXT DEFAULT 'KRW'
     )""",
     "CREATE INDEX IF NOT EXISTS idx_symbols_name ON symbols (lower(name))",
-    # 관심종목 — 아직 안 산 종목을 담아 두고 목표가와 견준다. 보유는 movements가 말해 주므로
-    # 여기엔 '보고 싶은 것'만 넣는다(보유 여부와 무관).
+    # ── 시장 데이터 캐시 ──────────────────────────────────────────
+    # 화면은 항상 DB에서 읽는다. 야후(yfinance)는 이 표를 채우는 쪽으로만 쓴다.
+    # 그래야 바깥이 끊겨도 차트가 뜨고, 관심종목 목록이 종목 수만큼 외부 호출을 안 한다.
+    """CREATE TABLE IF NOT EXISTS symbol_meta (
+        ticker         TEXT PRIMARY KEY,
+        yf_symbol      TEXT,                       -- 005930 → 005930.KS (한 번 정해지면 안 바뀐다)
+        name           TEXT, market TEXT, currency TEXT,
+        sector         TEXT, industry TEXT,
+        market_cap     BIGINT,
+        per            DOUBLE PRECISION, pbr DOUBLE PRECISION,
+        eps            DOUBLE PRECISION, beta DOUBLE PRECISION,
+        dividend_yield DOUBLE PRECISION,           -- %
+        dividend_rate  DOUBLE PRECISION,           -- 주당 연 배당(그 종목 통화)
+        ex_dividend    TEXT,                       -- 배당락일 YYYY-MM-DD
+        high52         DOUBLE PRECISION, low52 DOUBLE PRECISION,
+        summary        TEXT, site TEXT,
+        updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+        failed_at      TIMESTAMPTZ                 -- 조회 실패 시각(계속 재시도하지 않게)
+    )""",
+    """CREATE TABLE IF NOT EXISTS symbol_dividends (
+        ticker   TEXT NOT NULL,
+        pay_date TEXT NOT NULL,                    -- 지급(기록)일
+        amount   DOUBLE PRECISION NOT NULL,
+        PRIMARY KEY (ticker, pay_date)
+    )""",
+    # 일봉만 저장한다. 주봉·월봉은 여기서 만들어 쓴다 — 이력을 한 벌만 관리하려고.
+    """CREATE TABLE IF NOT EXISTS symbol_candles (
+        ticker TEXT NOT NULL,
+        d      TEXT NOT NULL,                      -- YYYY-MM-DD
+        o DOUBLE PRECISION, h DOUBLE PRECISION, l DOUBLE PRECISION,
+        c DOUBLE PRECISION NOT NULL, v BIGINT,
+        PRIMARY KEY (ticker, d)
+    )""",
+    "CREATE INDEX IF NOT EXISTS idx_candles_ticker_d ON symbol_candles(ticker, d DESC)",
+
+    # ── 관심종목 ─────────────────────────────────────────────────
+    # 그룹으로 묶는다. '보유 중' 그룹은 표에 넣지 않고 거래내역에서 만들어 끼운다
+    # (사면 저절로 들어오고 팔면 저절로 빠져야 하므로 사람이 관리할 것이 아니다).
+    """CREATE TABLE IF NOT EXISTS watch_groups (
+        id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        name       TEXT NOT NULL UNIQUE,
+        sort_order INT NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )""",
+    "INSERT INTO watch_groups(name, sort_order) SELECT '관심', 0 WHERE NOT EXISTS (SELECT 1 FROM watch_groups)",
     """CREATE TABLE IF NOT EXISTS watch_stocks (
         id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
         ticker     TEXT NOT NULL UNIQUE,
@@ -248,6 +291,10 @@ SCHEMA = [
         memo       TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )""",
+    "ALTER TABLE watch_stocks ADD COLUMN IF NOT EXISTS group_id BIGINT REFERENCES watch_groups(id)",
+    "UPDATE watch_stocks SET group_id = (SELECT id FROM watch_groups ORDER BY sort_order, id LIMIT 1) WHERE group_id IS NULL",
+    "ALTER TABLE watch_stocks DROP CONSTRAINT IF EXISTS watch_stocks_ticker_key",
+    "CREATE UNIQUE INDEX IF NOT EXISTS uq_watch_group_ticker ON watch_stocks(group_id, ticker)",
     # 사용자 등록 별칭(증권사 한글명 → 티커). 미국 종목 한글명 등 자동피드에 없는 매핑. 재시작 불필요.
     """CREATE TABLE IF NOT EXISTS symbol_aliases (
         name     TEXT PRIMARY KEY,   -- normalize_name된 종목명

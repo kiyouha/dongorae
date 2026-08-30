@@ -203,6 +203,16 @@ def cmd_macro(args):
         print("  ✗", e)
 
 
+def cmd_market_refresh(args):
+    """관심·보유 종목의 시세(일봉)·배당·기업정보를 받아 DB에 저장. 하루 한 번이면 충분하다."""
+    from app import market
+    with db.connect() as conn:
+        out = market.refresh(conn, only_stale=not args.all)
+        print(f"market-refresh: {out['updated']}개 갱신, {out['skipped']}개 건너뜀"
+              + (f", 실패 {len(out['failed'])}개" if out["failed"] else ""))
+        for f in out["failed"][:10]:
+            print(f"  ✗ {f['ticker']}: {f['error']}")
+
 def cmd_sync_symbols(args):
     from app import symbols
     conn = db.connect()
@@ -262,6 +272,9 @@ def main(argv=None):
 
     sub.add_parser("snapshot", help="오늘 순자산 스냅샷 저장").set_defaults(func=cmd_snapshot)
     sub.add_parser("macro-refresh", help="거시경제 지표 갱신(FDR)").set_defaults(func=cmd_macro)
+    mr = sub.add_parser("market-refresh", help="관심·보유 종목 시세·배당·기업정보 갱신(하루 1회)")
+    mr.add_argument("--all", action="store_true", help="최근에 받은 것도 다시 받는다")
+    mr.set_defaults(func=cmd_market_refresh)
     ptt = sub.add_parser("trade-tick", help="단타 규칙 평가(cron 장중; --force로 장 마감에도)")
     ptt.add_argument("--force", action="store_true")
     ptt.set_defaults(func=cmd_trade_tick)

@@ -4,6 +4,10 @@ PATH=/usr/local/bin:/usr/bin:/bin
 * * * * * cd /app && python cli.py scan-imports >> /app/data/imports.log 2>&1 || true
 # 매일 07:00 (KST): 시세 갱신 + 순자산 스냅샷. 거래내역은 웹 업로드 또는 imports 폴더로 적재.
 0 7 * * * cd /app && python cli.py refresh-prices >> /app/data/refresh.log 2>&1 && python cli.py snapshot >> /app/data/refresh.log 2>&1
+# 매일 07:10: 관심·보유 종목의 일봉·배당·기업정보를 DB에 채운다(화면은 DB만 읽는다).
+#   미국장 마감(한국시간 새벽)과 국내 전일 종가가 모두 들어온 뒤라 하루 한 번이면 충분하다.
+#   최근에 받은 것과 방금 실패한 것은 건너뛰므로, 실패분만 다음 날 자동 재시도된다.
+10 7 * * * cd /app && python cli.py market-refresh >> /app/data/refresh.log 2>&1 || true
 # 매일 07:20: 거시경제 지표 갱신.
 20 7 * * * cd /app && python cli.py macro-refresh >> /app/data/refresh.log 2>&1 || true
 # 매일 07:30: 서울 아파트 실거래가 최근 2개월 갱신 + 신규 단지 건축물대장(증분).

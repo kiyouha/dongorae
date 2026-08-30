@@ -124,6 +124,11 @@ def refresh(conn, symbols_csv=SYMBOLS_CSV):
                 result["missing"].append(sym)
                 continue
             base.upsert_price(conn, sym, px, ccy, today)
+            # 해석한 티커를 상품에 적어 둔다. 여기서만 알 수 있는 값이라 안 적으면
+            # 화면(종목 목록)도 시장데이터 갱신도 매번 다시 해석해야 한다.
+            conn.execute(
+                "UPDATE products SET ticker = %s WHERE name = %s AND COALESCE(ticker,'') = ''",
+                (ticker, sym))
             result["updated"].append((sym, ticker, round(px, 2)))
         except Exception as e:
             result["errors"].append((sym, ticker, f"{type(e).__name__}: {str(e)[:50]}"))

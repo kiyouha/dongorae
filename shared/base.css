@@ -629,6 +629,16 @@ details.help .help-body b { color: var(--ink); font-weight: var(--w-semi); }
 .sd-bar .b { width: 100%; max-width: 26px; background: var(--c-green); border-radius: 3px 3px 0 0; }
 .sd-bar .y { font-size: var(--fs-2xs); color: var(--muted); }
 
+/* 관심종목 — 그룹 묶음. 맨 위 '보유 중'은 거래내역이 만드는 자동 그룹이다. */
+.ws-group { margin-bottom: var(--sp-5); }
+.ws-ghd { display: flex; align-items: center; gap: var(--sp-2) var(--sp-3); flex-wrap: wrap; padding: 0 2px var(--sp-2); }
+.ws-ghd .g-name { font-size: var(--fs-md); font-weight: var(--w-semi); color: var(--ink); }
+.ws-ghd .g-meta { font-size: var(--fs-xs); color: var(--muted); }
+.ws-ghd .badge, .ws-ghd .mini { margin-left: auto; flex: none; }
+.ws-ghd .mini + .mini, .ws-ghd .badge + .mini { margin-left: 0; }
+.ws-addg { display: flex; gap: var(--sp-2); align-items: center; padding-top: var(--sp-2); border-top: 1px solid var(--line); }
+.ws-addg input { width: 220px; }
+
 /* 관심종목 줄 — 이름/티커 · 현재가 · 목표가 · 빼기 */
 .ws-px { flex: none; text-align: right; min-width: 92px; }
 .ws-px .num { font-size: var(--fs-sm); font-weight: var(--w-semi); }

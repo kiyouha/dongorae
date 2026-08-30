@@ -1045,17 +1045,26 @@ class ReorderIn(BaseModel):
 
 
 # ── 시장 데이터(차트·배당·기업정보) + 관심종목 ─────────────────
-# 보유 평가(FDR)와 분리돼 있다. 여기가 실패해도 순자산은 흔들리지 않는다.
+# 화면은 DB만 읽는다. 야후는 하루 한 번 크론(cli.py market-refresh)이 부른다.
 @app.get("/api/market/candles")
 def api_market_candles(ticker: str, market: str = "", range: str = "1y"):
-    """기간별 시세. range=1m|6m|1y|5y|max (일·주·월 간격이 함께 정해진다)."""
-    return market_mod.candles(ticker, market, range)
+    with _conn() as conn:
+        return market_mod.candles(conn, ticker, market, range)
 
 
 @app.get("/api/market/profile")
 def api_market_profile(ticker: str, market: str = ""):
-    """기업정보 + 배당 이력·배당락일."""
-    return market_mod.profile(ticker, market)
+    with _conn() as conn:
+        return market_mod.profile(conn, ticker, market)
+
+
+@app.post("/api/market/refresh")
+def api_market_refresh(request: Request, all: int = 0):
+    """관심·보유 종목의 시세·배당·기업정보를 지금 받아 온다(관리자)."""
+    if not _require_admin(request):
+        return JSONResponse({"error": "관리자 전용"}, status_code=403)
+    with _conn() as conn:
+        return market_mod.refresh(conn, only_stale=not all)
 
 
 class WatchStockIn(BaseModel):
@@ -1065,23 +1074,85 @@ class WatchStockIn(BaseModel):
     currency: Optional[str] = "KRW"
     target_krw: Optional[float] = None
     memo: Optional[str] = None
+    group_id: Optional[int] = None
+
+
+class WatchGroupIn(BaseModel):
+    name: str
+
+
+def _held_tickers(conn):
+    """지금 보유 중인 종목(수량 > 0). 팔아서 0이 된 것은 빠진다."""
+    out = {}
+    for b in movements.pnl_by_symbol(conn, None):
+        if b["qty"] > 1e-9 and (b.get("ticker") or "").strip():
+            out[b["ticker"].upper()] = b
+    return out
 
 
 @app.get("/api/watch/stocks")
 def api_watch_stocks():
-    """관심종목 + 현재가·목표가 대비. 시세는 실패해도 목록은 나와야 한다."""
+    """그룹별 관심종목. 맨 앞은 거래내역에서 만든 '보유 중' 그룹(사람이 관리하지 않는다).
+    시세는 전부 DB(symbol_candles)에서 읽으므로 종목이 많아도 외부 호출이 없다."""
     with _conn() as conn:
-        rows = [dict(r) for r in conn.execute(
-            "SELECT * FROM watch_stocks ORDER BY created_at DESC, id DESC").fetchall()]
-    for r in rows:
-        r["created_at"] = str(r["created_at"])[:10]
-        c = market_mod.candles(r["ticker"], r["market"] or "", "1m")
-        last = c.get("last") if isinstance(c, dict) else None
-        r["price"] = last
-        r["change_pct"] = c.get("change_pct") if isinstance(c, dict) else None
-        r["to_target_pct"] = ((r["target_krw"] - last) / last * 100
-                              if (last and r.get("target_krw")) else None)
-    return {"rows": rows}
+        def deco(ticker, base):
+            last, chg = market_mod.last_close(conn, ticker)
+            m = conn.execute(
+                "SELECT sector, dividend_yield, ex_dividend, name FROM symbol_meta WHERE ticker = %s",
+                (ticker,)).fetchone()
+            r = dict(base)
+            r["price"] = last
+            r["change_pct"] = chg
+            r["sector"] = m["sector"] if m else None
+            r["dividend_yield"] = m["dividend_yield"] if m else None
+            r["ex_dividend"] = m["ex_dividend"] if m else None
+            if r.get("target_krw") and last:
+                r["to_target_pct"] = (r["target_krw"] - last) / last * 100
+            else:
+                r["to_target_pct"] = None
+            return r
+
+        held = _held_tickers(conn)
+        groups = [{
+            "id": "held", "name": "보유 중", "virtual": True,
+            "rows": [deco(t, {"ticker": t, "name": b["name"], "market": b["market"],
+                              "currency": b["ccy"], "qty": b["qty"], "target_krw": None})
+                     for t, b in sorted(held.items(), key=lambda kv: -(kv[1]["qty"] or 0))],
+        }]
+        for g in conn.execute("SELECT id, name FROM watch_groups ORDER BY sort_order, id").fetchall():
+            rows = [dict(r) for r in conn.execute(
+                "SELECT * FROM watch_stocks WHERE group_id = %s ORDER BY created_at DESC, id DESC",
+                (g["id"],)).fetchall()]
+            for r in rows:
+                r["created_at"] = str(r["created_at"])[:10]
+            groups.append({"id": g["id"], "name": g["name"], "virtual": False,
+                           "rows": [deco(r["ticker"], r) for r in rows]})
+    return {"groups": groups}
+
+
+@app.post("/api/watch/groups")
+def api_watch_group_add(item: WatchGroupIn):
+    name = (item.name or "").strip()
+    if not name:
+        return {"error": "그룹 이름을 입력하세요."}
+    with _conn() as conn:
+        row = conn.execute(
+            """INSERT INTO watch_groups(name, sort_order)
+               VALUES (%s, COALESCE((SELECT max(sort_order) + 1 FROM watch_groups), 0))
+               ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id""",
+            (name,)).fetchone()
+        conn.commit()
+    return {"ok": True, "id": row["id"]}
+
+
+@app.delete("/api/watch/groups/{gid}")
+def api_watch_group_del(gid: int):
+    """그룹을 지우면 그 안의 종목도 함께 빠진다(다른 그룹에 담긴 같은 종목은 남는다)."""
+    with _conn() as conn:
+        conn.execute("DELETE FROM watch_stocks WHERE group_id = %s", (gid,))
+        conn.execute("DELETE FROM watch_groups WHERE id = %s", (gid,))
+        conn.commit()
+    return {"ok": True}
 
 
 @app.post("/api/watch/stocks")
@@ -1090,16 +1161,23 @@ def api_watch_stock_add(item: WatchStockIn):
     if not tk:
         return {"error": "티커가 필요합니다."}
     with _conn() as conn:
+        gid = item.group_id or (conn.execute(
+            "SELECT id FROM watch_groups ORDER BY sort_order, id LIMIT 1").fetchone() or {}).get("id")
+        if not gid:
+            gid = conn.execute("INSERT INTO watch_groups(name) VALUES ('관심') RETURNING id").fetchone()["id"]
         row = conn.execute(
-            """INSERT INTO watch_stocks(ticker, name, market, currency, target_krw, memo)
-               VALUES (%s,%s,%s,%s,%s,%s)
-               ON CONFLICT (ticker) DO UPDATE SET name = EXCLUDED.name,
+            """INSERT INTO watch_stocks(ticker, name, market, currency, target_krw, memo, group_id)
+               VALUES (%s,%s,%s,%s,%s,%s,%s)
+               ON CONFLICT (group_id, ticker) DO UPDATE SET name = EXCLUDED.name,
                  market = EXCLUDED.market, currency = EXCLUDED.currency
                RETURNING id""",
             (tk, (item.name or tk).strip(), item.market, (item.currency or "KRW").upper(),
-             item.target_krw, item.memo)).fetchone()
+             item.target_krw, item.memo, gid)).fetchone()
         conn.commit()
-    return {"ok": True, "id": row["id"]}
+        # 처음 담은 종목이면 시세를 그 자리에서 한 번 채운다(빈 차트를 보여 줄 수 없다).
+        if not conn.execute("SELECT 1 FROM symbol_candles WHERE ticker = %s LIMIT 1", (tk,)).fetchone():
+            market_mod.refresh_one(conn, tk, item.market or "", full=True)
+    return {"ok": True, "id": row["id"], "group_id": gid}
 
 
 @app.patch("/api/watch/stocks/{wid}")
@@ -1107,6 +1185,8 @@ def api_watch_stock_edit(wid: int, item: WatchStockIn):
     with _conn() as conn:
         conn.execute("UPDATE watch_stocks SET target_krw = %s, memo = %s WHERE id = %s",
                      (item.target_krw, item.memo, wid))
+        if item.group_id:
+            conn.execute("UPDATE watch_stocks SET group_id = %s WHERE id = %s", (item.group_id, wid))
         conn.commit()
     return {"ok": True}
 
