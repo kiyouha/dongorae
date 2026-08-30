@@ -2449,8 +2449,11 @@ function symRow(it, idx) {
         </div>
         <div class="field">
           <label for="dp-${fid}">표시명</label>
-          <input id="dp-${fid}" class="smDisp" list="dispSuggest" value="${esc(DISPLAY[key] || "")}" placeholder="${esc(symName(it))}">
-          <span class="hint">화면에 이 이름으로 나옵니다. 비우면 원래 이름을 씁니다.</span>
+          <div class="disp-row">
+            <input id="dp-${fid}" class="smDisp" list="dispSuggest" value="${esc(DISPLAY[key] || "")}" placeholder="${esc(symName(it))}">
+            ${it.ticker ? `<button type="button" class="mini nvName" data-ticker="${esc(it.ticker)}" title="네이버가 부르는 이름을 가져옵니다">네이버</button>` : ""}
+          </div>
+          <span class="hint">화면에 이 이름으로 나옵니다. 비우면 원래 이름을 씁니다.${it.ticker ? " '네이버'를 누르면 채워만 주니 보고 고친 뒤 저장하세요." : ""}</span>
         </div>
         <div class="field full">
           <label>이 티커로 묶인 원래 이름</label>
@@ -2476,6 +2479,19 @@ function symBind(box) {
   }));
   box.querySelectorAll(".symCancel").forEach(b => b.addEventListener("click", () => { symEditKey = null; renderSymMgr(); }));
   box.querySelectorAll(".smSave").forEach(b => b.addEventListener("click", () => saveSymMgr(b)));
+  box.querySelectorAll(".nvName").forEach(b => b.addEventListener("click", async () => {
+    const inp = b.closest(".sym-item").querySelector(".smDisp");
+    b.disabled = true; const old = b.textContent; b.textContent = "찾는 중…";
+    try {
+      const r = await api("api/symbols/naver-name?ticker=" + encodeURIComponent(b.dataset.ticker));
+      if (r && r.name) {
+        inp.value = r.name; inp.focus();
+        toast(r.approx ? `비슷한 종목(${r.matched})의 이름입니다 — 확인 후 저장하세요`
+                       : `네이버: ${r.name}${r.market ? " · " + r.market : ""}`);
+      } else toast((r && r.error) || "찾지 못했습니다");
+    } catch (_) { toast("네이버에 물어보지 못했습니다"); }
+    b.disabled = false; b.textContent = old;
+  }));
   box.querySelectorAll(".chipDel").forEach(a => a.addEventListener("click", () => chipDelName(a.dataset.name)));
   box.querySelectorAll(".chipAdd").forEach(inp => inp.addEventListener("change", () => chipAddName(inp)));
   // 엔터로 저장 — 값 두 개짜리 폼에서 마우스로 옮겨가지 않게.

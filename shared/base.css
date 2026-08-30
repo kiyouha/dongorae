@@ -678,6 +678,9 @@ details.help .help-body b { color: var(--ink); font-weight: var(--w-semi); }
 
 .sym-edit { padding: 0 var(--sp-4) var(--sp-4); }
 .sym-edit .form-grid { max-width: 620px; }
+.disp-row { display: flex; gap: 6px; align-items: center; }
+.disp-row input { flex: 1; min-width: 0; }
+.disp-row .mini { flex: none; }
 .sym-add { margin-bottom: var(--sp-3); }
 
 .sym-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-height: var(--ctl-h); }

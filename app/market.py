@@ -140,6 +140,57 @@ def profile(conn, ticker, market=""):
     return d
 
 
+# ── 네이버 표기 이름 ────────────────────────────────────────────────
+def naver_name(ticker):
+    """네이버가 부르는 종목명. 자동완성(ac.stock.naver.com)이 국내·미국을 함께 답한다.
+    종목 상세 API는 거래소 접미사(.O/.N/.K)를 맞춰야 하고 NYSE는 막혀 있어 쓰지 않는다.
+
+    공식 API가 아니다 — 언제 막혀도 이상하지 않으므로 '고치기'에서 사람이 누를 때만
+    부르고, 결과를 바로 저장하지 않고 입력칸에 채워 준다(보고 고칠 수 있게)."""
+    import json
+    import urllib.parse
+    import urllib.request
+    t = (ticker or "").strip().upper()
+    if not t:
+        return {"error": "티커가 없습니다"}
+
+    # 국내(여섯 자리)는 종목 전용 API가 확실하다. m.stock.naver.com/domestic/stock/005380/total 과 같은 것.
+    if len(t) == 6 and t[0].isdigit():
+        try:
+            req = urllib.request.Request(
+                f"https://m.stock.naver.com/api/stock/{t}/basic",
+                headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json",
+                         "Referer": "https://m.stock.naver.com/"})
+            with urllib.request.urlopen(req, timeout=8) as r:
+                d = json.loads(r.read())
+            if d.get("stockName"):
+                return {"ticker": t, "name": d["stockName"], "market": "국내"}
+        except Exception:
+            pass                                # 자동완성으로 한 번 더 해 본다
+
+    # 미국은 거래소 접미사(.O/.N/.K)를 맞춰야 하고 NYSE는 상세 API가 막혀 있다.
+    # 자동완성은 접미사 없이 티커만으로 국내·미국을 함께 답한다.
+    url = ("https://ac.stock.naver.com/ac?target=stock&q=" + urllib.parse.quote(t))
+    try:
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0", "Accept": "application/json",
+            "Referer": "https://m.stock.naver.com/"})
+        with urllib.request.urlopen(req, timeout=8) as r:
+            d = json.loads(r.read())
+    except Exception as e:
+        return {"error": f"네이버에 물어보지 못했습니다 ({type(e).__name__})"}
+    for it in (d.get("items") or []):
+        if (it.get("code") or "").upper() == t and it.get("name"):
+            return {"ticker": t, "name": it["name"],
+                    "market": it.get("typeName") or it.get("typeCode") or ""}
+    first = (d.get("items") or [{}])[0]
+    if first.get("name"):                      # 코드가 정확히 안 맞아도 첫 후보는 보여 준다
+        return {"ticker": t, "name": first["name"],
+                "market": first.get("typeName") or "", "approx": True,
+                "matched": first.get("code")}
+    return {"error": "네이버에서 못 찾았습니다"}
+
+
 # ── 채우기 (크론이 부른다) ──────────────────────────────────────────
 def _finite(v):
     try:

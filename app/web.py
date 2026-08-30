@@ -1350,6 +1350,14 @@ class DisplayIn(BaseModel):
     display: str = ""        # 빈 값이면 표시명 삭제(원래 이름으로)
 
 
+@app.get("/api/symbols/naver-name")
+def api_symbols_naver_name(ticker: str, request: Request):
+    """네이버가 부르는 이름 하나를 찾아 돌려준다(저장하지 않는다). 관리자 전용."""
+    if not _require_admin(request):
+        return JSONResponse({"error": "관리자 전용"}, status_code=403)
+    return market_mod.naver_name(ticker)
+
+
 @app.post("/api/symbols/display/auto")
 def api_symbols_display_auto(request: Request):
     """표시명을 자동으로 채운다. 사람이 정해 둔 표시명은 건드리지 않는다.
