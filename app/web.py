@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import config, db, kis, ledger, movements, trading, valuation
+from . import market as market_mod
 from .realestate.seoul import SEOUL_GU
 
 app = FastAPI(title="자산현황")
@@ -1041,6 +1042,81 @@ def api_movements_rebuild():
 
 class ReorderIn(BaseModel):
     ids: list = []
+
+
+# ── 시장 데이터(차트·배당·기업정보) + 관심종목 ─────────────────
+# 보유 평가(FDR)와 분리돼 있다. 여기가 실패해도 순자산은 흔들리지 않는다.
+@app.get("/api/market/candles")
+def api_market_candles(ticker: str, market: str = "", range: str = "1y"):
+    """기간별 시세. range=1m|6m|1y|5y|max (일·주·월 간격이 함께 정해진다)."""
+    return market_mod.candles(ticker, market, range)
+
+
+@app.get("/api/market/profile")
+def api_market_profile(ticker: str, market: str = ""):
+    """기업정보 + 배당 이력·배당락일."""
+    return market_mod.profile(ticker, market)
+
+
+class WatchStockIn(BaseModel):
+    ticker: str
+    name: str
+    market: Optional[str] = None
+    currency: Optional[str] = "KRW"
+    target_krw: Optional[float] = None
+    memo: Optional[str] = None
+
+
+@app.get("/api/watch/stocks")
+def api_watch_stocks():
+    """관심종목 + 현재가·목표가 대비. 시세는 실패해도 목록은 나와야 한다."""
+    with _conn() as conn:
+        rows = [dict(r) for r in conn.execute(
+            "SELECT * FROM watch_stocks ORDER BY created_at DESC, id DESC").fetchall()]
+    for r in rows:
+        r["created_at"] = str(r["created_at"])[:10]
+        c = market_mod.candles(r["ticker"], r["market"] or "", "1m")
+        last = c.get("last") if isinstance(c, dict) else None
+        r["price"] = last
+        r["change_pct"] = c.get("change_pct") if isinstance(c, dict) else None
+        r["to_target_pct"] = ((r["target_krw"] - last) / last * 100
+                              if (last and r.get("target_krw")) else None)
+    return {"rows": rows}
+
+
+@app.post("/api/watch/stocks")
+def api_watch_stock_add(item: WatchStockIn):
+    tk = (item.ticker or "").strip().upper()
+    if not tk:
+        return {"error": "티커가 필요합니다."}
+    with _conn() as conn:
+        row = conn.execute(
+            """INSERT INTO watch_stocks(ticker, name, market, currency, target_krw, memo)
+               VALUES (%s,%s,%s,%s,%s,%s)
+               ON CONFLICT (ticker) DO UPDATE SET name = EXCLUDED.name,
+                 market = EXCLUDED.market, currency = EXCLUDED.currency
+               RETURNING id""",
+            (tk, (item.name or tk).strip(), item.market, (item.currency or "KRW").upper(),
+             item.target_krw, item.memo)).fetchone()
+        conn.commit()
+    return {"ok": True, "id": row["id"]}
+
+
+@app.patch("/api/watch/stocks/{wid}")
+def api_watch_stock_edit(wid: int, item: WatchStockIn):
+    with _conn() as conn:
+        conn.execute("UPDATE watch_stocks SET target_krw = %s, memo = %s WHERE id = %s",
+                     (item.target_krw, item.memo, wid))
+        conn.commit()
+    return {"ok": True}
+
+
+@app.delete("/api/watch/stocks/{wid}")
+def api_watch_stock_del(wid: int):
+    with _conn() as conn:
+        conn.execute("DELETE FROM watch_stocks WHERE id = %s", (wid,))
+        conn.commit()
+    return {"ok": True}
 
 
 @app.get("/api/symbols/search")

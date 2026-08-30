@@ -8,8 +8,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="static/img/icon-192.png?v=1">
   <link rel="apple-touch-icon" sizes="180x180" href="static/img/icon-180.png?v=1">
   <meta name="theme-color" content="#08090a">
-  <link rel="stylesheet" href="static/styles.css?v=20260830e">
-  <link rel="stylesheet" href="/shared/base.css?v=20260830e">
+  <link rel="stylesheet" href="static/styles.css?v=20260830g">
+  <link rel="stylesheet" href="/shared/base.css?v=20260830g">
 </head>
 <body>
   <div class="app">
@@ -156,7 +156,7 @@
           <section>
             <div class="page-hd">
               <h2>종목</h2>
-              <span class="sub">거래한 적 있는 종목은 지금 안 들고 있어도 나옵니다</span>
+              <span class="sub" id="stockSub">거래한 적 있는 종목은 지금 안 들고 있어도 나옵니다</span>
               <span class="acts">
                 <select id="pnlScope">
                   <option value="">전체 종목</option>
@@ -167,8 +167,19 @@
                 <span class="muted" id="pnlCount" style="font-size:var(--fs-xs)"></span>
               </span>
             </div>
+
+            <div class="toolbar">
+              <span class="ranges" id="stockScope">
+                <button data-s="mine" class="on">내 종목</button>
+                <button data-s="kr">국내주식</button>
+                <button data-s="us">미국주식</button>
+              </span>
+              <input type="search" id="mktQ" placeholder="종목명·티커로 찾기" hidden>
+            </div>
+
             <div id="pnlSum"></div>
             <div id="pnlList"></div>
+            <div id="mktList" hidden></div>
           </section>
 
       </div>
@@ -180,12 +191,9 @@
           <div class="page-hd">
             <h2>관심종목</h2>
             <span class="sub">아직 사지 않은 종목을 담아 두고 목표가와 견줍니다</span>
+            <span class="acts"><span class="muted" id="wsCount" style="font-size:var(--fs-xs)"></span></span>
           </div>
-          <div class="blank">
-            <div class="t">관심 종목 · 준비 중</div>
-            <div class="d">담아 둔 종목을 목표가와 견주는 자리입니다.
-              매수하면 거래내역에 넣는 것만으로 <b>종목</b>에 보유로 넘어갑니다.</div>
-          </div>
+          <div id="wsList"></div>
         </section>
       </div>
     </section>
@@ -757,6 +765,6 @@
 
   <div class="toast" id="toast"></div>
   <div class="busy" id="busy"><span class="busy-dot"></span>반영중…</div>
-  <script src="static/app.js?v=20260830e"></script>
+  <script src="static/app.js?v=20260830g"></script>
 </body>
 </html>

@@ -594,6 +594,47 @@ details.help .help-body b { color: var(--ink); font-weight: var(--w-semi); }
 .env-seg button.on[data-warn]::after { color: var(--accent-on); }
 
 /* 종목 관리표 — 칸 폭을 표가 정하게 두고, 입력은 칸을 채운다. */
+/* ── 종목 상세 모달 · 관심종목 ─────────────────────────────────────
+   차트·배당·기업정보는 yfinance에서 온다. 내 거래이력과 한 화면에 두되
+   '내 것'(위)과 '시장이 말해 주는 것'(아래)을 시각적으로 가른다. */
+.sd-head { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+.sd-name { font-size: var(--fs-lg); font-weight: var(--w-semi); color: var(--ink); }
+.sd-head .wsToggle { margin-left: auto; flex: none; }
+.mini.wsToggle.on { color: var(--c-coin); border-color: color-mix(in srgb, var(--c-coin) 45%, var(--line-strong)); }
+
+.sd-chart { margin-bottom: var(--sp-4); }
+.sd-canvas { height: 190px; }
+.sd-canvas canvas { width: 100%; height: 100%; display: block; }
+.sd-last { margin-left: auto; display: flex; align-items: baseline; gap: var(--sp-2); font-size: var(--fs-sm); }
+.sd-last .muted { font-size: var(--fs-2xs); }
+
+.sd-facts {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 1px; background: var(--line); border: 1px solid var(--line);
+  border-radius: var(--r-sm); overflow: hidden; margin-bottom: var(--sp-4);
+}
+.sd-f { background: var(--surface); padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+.sd-f .l { font-size: var(--fs-2xs); color: var(--muted); }
+.sd-f .v { font-size: var(--fs-sm); color: var(--ink); }
+
+.sd-sec { margin-bottom: var(--sp-4); }
+.sd-sec-t { font-size: var(--fs-xs); color: var(--muted); margin-bottom: 6px; }
+.sd-divs { display: flex; align-items: flex-end; gap: 6px; height: 70px; }
+.sd-bar { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; min-width: 0; }
+.sd-bar .b { width: 100%; max-width: 26px; background: var(--c-green); border-radius: 3px 3px 0 0; }
+.sd-bar .y { font-size: var(--fs-2xs); color: var(--muted); }
+
+/* 관심종목 줄 — 이름/티커 · 현재가 · 목표가 · 빼기 */
+.ws-px { flex: none; text-align: right; min-width: 92px; }
+.ws-px .num { font-size: var(--fs-sm); font-weight: var(--w-semi); }
+.wsTarget { width: 104px; height: 26px; font-size: var(--fs-2xs); flex: none; }
+
+@media (max-width: 700px) {
+  .sd-canvas { height: 160px; }
+  .ws-px { min-width: 0; }
+  .wsTarget { width: 84px; }
+}
+
 /* ── 종목 관리 ─────────────────────────────────────────────────────
    읽기가 기본. 입력칸을 늘어놓지 않고, 고칠 줄만 펼친다.
    한 줄 = 티커 하나. 티커가 없으면 시세가 안 붙으므로 그것부터 눈에 띄게. */

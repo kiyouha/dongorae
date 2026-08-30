@@ -230,17 +230,35 @@ function openModal(title, bodyHtml) {
 }
 function closeModal() { $("#modal").classList.add("hidden"); }
 const KIND_CLS = { "매수": "loss", "매도": "gain", "배당": "gain", "입고": "muted", "출고": "muted" };
-async function openStockModal(symbol) {
-  openModal(symbol, `<div class="muted" class="pad-y">불러오는 중…</div>`);
-  let d; try { d = await api("api/stock?symbol=" + encodeURIComponent(symbol)); } catch (_) { $("#modalBody").innerHTML = `<div class="blank"><div class="t">불러오지 못했습니다</div><div class="d">잠시 후 다시 시도해 주세요.</div></div>`; return; }
-  const c = d.currency || "KRW";
-  const rz = signed(d.realized);
-  const kpis = `<div class="kpis" style="margin-bottom:10px">
+/* 종목 상세 — 내 거래이력(자체 데이터) + 차트·배당·기업정보(yfinance).
+   시장 데이터는 실패해도 거래이력은 보여야 한다. 그래서 두 요청을 따로 처리한다. */
+let MODAL_STOCK = null;
+async function openStockModal(symbol, ticker, market) {
+  MODAL_STOCK = { symbol, ticker: ticker || "", market: market || "", range: "1y" };
+  openModal(symbol, `<div class="muted pad-y">불러오는 중…</div>`);
+  let d = null;
+  try { d = await api("api/stock?symbol=" + encodeURIComponent(symbol)); } catch (_) { }
+  if (!MODAL_STOCK) return;                       // 그 사이 닫혔으면 그린다고 애쓰지 않는다
+  // 내 거래에서 나온 종목이면 티커를 거기서 얻는다(시장 검색으로 들어온 건 이미 있다).
+  if (!MODAL_STOCK.ticker) {
+    const hit = (typeof SYM_ITEMS !== "undefined" ? SYM_ITEMS : []).find(x =>
+      (x.names || []).includes(symbol) || x.ticker === symbol);
+    if (hit && hit.ticker) MODAL_STOCK.ticker = hit.ticker;
+  }
+  const c = (d && d.currency) || "KRW";
+  const rz = d ? signed(d.realized) : null;
+  const mine = d && (d.qty || (d.trades || []).length);
+  const on = WATCH_SET.has((MODAL_STOCK.ticker || "").toUpperCase());
+  const head = `<div class="sd-head">
+      <div class="sd-name">${esc(symbol)}${MODAL_STOCK.ticker ? ` <span class="muted">${esc(MODAL_STOCK.ticker)}</span>` : ""}</div>
+      ${MODAL_STOCK.ticker ? `<button class="mini wsToggle${on ? " on" : ""}" id="sdWatch">${on ? "★ 담김" : "☆ 관심"}</button>` : ""}
+    </div>`;
+  const kpis = mine ? `<div class="kpis" style="margin-bottom:10px">
     ${kpiBox("보유수량", qtyFmt(d.qty) + "주")}
     ${kpiBox("평균취득가", money(d.avg_cost, c))}
     ${kpiBox("실현손익", rz.t, rz.c)}
-  </div>`;
-  const rows = (d.trades || []).map(t => {
+  </div>` : "";
+  const rows = ((d && d.trades) || []).map(t => {
     const cls = KIND_CLS[t.kind] || "";
     return `<tr><td class="num">${esc(t.date)}</td><td class="sub-cell">${esc(t.account)}</td>
       <td><span class="${cls}">${esc(t.kind)}</span></td>
@@ -249,10 +267,134 @@ async function openStockModal(symbol) {
       <td class="r num">${t.cash ? money(t.cash, c) : ""}</td>
       <td class="sub-cell muted">${esc(t.adj || "")}</td></tr>`;
   }).join("");
-  $("#modalBody").innerHTML = kpis + `<div class="tablewrap"><table class="compact">
+  const trades = rows ? `<details class="help" open><summary>내 거래 ${(d.trades || []).length}건</summary>
+    <div class="help-body"><div class="tablewrap"><table class="compact">
     <thead><tr><th>날짜</th><th>계좌</th><th>유형</th><th class="r">수량</th><th class="r">단가</th><th class="r">금액</th><th>조정</th></tr></thead>
-    <tbody>${rows || `<tr><td class="muted">거래 없음</td></tr>`}</tbody></table></div>`;
+    <tbody>${rows}</tbody></table></div></div></details>` : "";
+
+  $("#modalBody").innerHTML = head + kpis + `
+    <div class="sd-chart">
+      <div class="toolbar" style="margin-bottom:6px">
+        <span class="ranges" id="sdRange">
+          <button data-r="1m">1개월</button><button data-r="6m">6개월</button>
+          <button data-r="1y" class="on">1년</button><button data-r="5y">5년</button>
+          <button data-r="max">전체</button>
+        </span>
+        <span class="sd-last" id="sdLast"></span>
+      </div>
+      <div class="sd-canvas"><canvas id="sdCanvas"></canvas></div>
+    </div>
+    <div id="sdInfo"></div>` + trades;
+
+  const rb = $("#sdRange");
+  if (rb) rb.addEventListener("click", e => {
+    const b = e.target.closest("button[data-r]"); if (!b) return;
+    rb.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+    MODAL_STOCK.range = b.dataset.r; loadStockChart();
+  });
+  const w = $("#sdWatch");
+  if (w) w.addEventListener("click", async () => {
+    await toggleWatch({ ticker: MODAL_STOCK.ticker, name: symbol, market: MODAL_STOCK.market, ccy: c });
+    const on2 = WATCH_SET.has((MODAL_STOCK.ticker || "").toUpperCase());
+    w.textContent = on2 ? "★ 담김" : "☆ 관심"; w.classList.toggle("on", on2);
+  });
+  if (MODAL_STOCK.ticker) { loadStockChart(); loadStockProfile(); }
+  else {
+    $("#sdInfo").innerHTML = `<div class="blank"><div class="t">티커가 없어 시세를 붙이지 못했습니다</div>
+      <div class="d">설정 &gt; 종목 별칭에서 이 종목에 티커를 달면 차트와 배당이 함께 나옵니다.</div></div>`;
+    const cb = $(".sd-chart"); if (cb) cb.hidden = true;
+  }
 }
+
+async function loadStockChart() {
+  const st = MODAL_STOCK; if (!st || !st.ticker) return;
+  const last = $("#sdLast"); if (last) last.textContent = "불러오는 중…";
+  let d;
+  try { d = await api(`api/market/candles?range=${st.range}&market=${encodeURIComponent(st.market)}&ticker=` + encodeURIComponent(st.ticker)); }
+  catch (_) { if (last) last.textContent = "시세를 받지 못했습니다"; return; }
+  if (!MODAL_STOCK || MODAL_STOCK.ticker !== st.ticker) return;
+  const rows = (d && d.candles) || [];
+  if (!rows.length) { if (last) last.textContent = d && d.error ? "시세 없음" : "시세 없음"; return; }
+  const up = d.change >= 0;
+  if (last) last.innerHTML = `<b class="num">${money(d.last, "")}</b>
+    <span class="num ${up ? "gain" : "loss"}">${up ? "+" : ""}${d.change_pct.toFixed(2)}%</span>
+    <span class="muted">${rows.length}${d.interval === "1d" ? "일" : d.interval === "1wk" ? "주" : "개월"}</span>`;
+  drawStockChart(rows, up);
+}
+
+function drawStockChart(rows, up) {
+  const cv = $("#sdCanvas"); if (!cv) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), w = cv.clientWidth, h = cv.clientHeight;
+  if (!w || !h) return;
+  cv.width = w * dpr; cv.height = h * dpr;
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+  const pad = { l: 6, r: 62, t: 10, b: 18 };
+  const cs = rows.map(r => r.c);
+  const min = Math.min(...cs), max = Math.max(...cs);
+  const lo = min - (max - min) * 0.06 || min * 0.98, hi = max + (max - min) * 0.06 || max * 1.02;
+  const X = i => pad.l + (w - pad.l - pad.r) * (rows.length < 2 ? 0.5 : i / (rows.length - 1));
+  const Y = v => pad.t + (h - pad.t - pad.b) * (1 - (v - lo) / ((hi - lo) || 1));
+  const cvv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#888";
+  const col = cvv(up ? "--c-red" : "--c-blue");     // 오르면 빨강, 내리면 파랑(국내 관행)
+  // 면
+  g.beginPath(); g.moveTo(X(0), Y(lo));
+  rows.forEach((r, i) => g.lineTo(X(i), Y(r.c)));
+  g.lineTo(X(rows.length - 1), Y(lo)); g.closePath();
+  const grad = g.createLinearGradient(0, pad.t, 0, h - pad.b);
+  grad.addColorStop(0, rgba(col, .22)); grad.addColorStop(1, rgba(col, 0));
+  g.fillStyle = grad; g.fill();
+  // 선
+  g.beginPath();
+  rows.forEach((r, i) => i ? g.lineTo(X(i), Y(r.c)) : g.moveTo(X(i), Y(r.c)));
+  g.strokeStyle = col; g.lineWidth = 1.8; g.stroke();
+  // 눈금
+  g.font = "10px system-ui"; g.fillStyle = cvv("--muted"); g.textAlign = "left";
+  g.fillText(numFmt(hi), w - pad.r + 4, pad.t + 8);
+  g.fillText(numFmt(lo), w - pad.r + 4, h - pad.b);
+  g.textAlign = "center";
+  g.fillText(rows[0].d.slice(2, 7), X(0) + 14, h - 4);
+  g.fillText(rows[rows.length - 1].d.slice(2, 7), X(rows.length - 1) - 14, h - 4);
+}
+
+async function loadStockProfile() {
+  const st = MODAL_STOCK; if (!st || !st.ticker) return;
+  const box = $("#sdInfo"); if (!box) return;
+  box.innerHTML = `<div class="card pad muted">기업정보 불러오는 중…</div>`;
+  let p;
+  try { p = await api(`api/market/profile?market=${encodeURIComponent(st.market)}&ticker=` + encodeURIComponent(st.ticker)); }
+  catch (_) { box.innerHTML = ""; return; }
+  if (!MODAL_STOCK || MODAL_STOCK.ticker !== st.ticker) return;
+  if (!p || p.error) { box.innerHTML = `<div class="hint-line muted">기업정보를 받지 못했습니다.</div>`; return; }
+  const cur = p.currency || "";
+  const cap = v => !v ? null : v >= 1e12 ? (v / 1e12).toFixed(1) + "조" : v >= 1e8 ? (v / 1e8).toFixed(0) + "억" : v.toLocaleString();
+  const f = (l, v) => v == null || v === "" ? "" : `<div class="sd-f"><span class="l">${l}</span><span class="v num">${v}</span></div>`;
+  const facts = [
+    f("업종", p.sector ? esc(p.sector) : null),
+    f("세부", p.industry ? esc(p.industry) : null),
+    f("시가총액", cap(p.market_cap)),
+    f("PER", p.per ? p.per.toFixed(1) : null),
+    f("PBR", p.pbr ? p.pbr.toFixed(2) : null),
+    f("EPS", p.eps ? numFmt(p.eps) : null),
+    f("배당수익률", p.dividend_yield ? p.dividend_yield.toFixed(2) + "%" : null),
+    f("주당 배당", p.dividend_rate ? numFmt(p.dividend_rate) : null),
+    f("배당락일", p.ex_dividend ? esc(p.ex_dividend) : null),
+    f("52주 최고", p.high52 ? numFmt(p.high52) : null),
+    f("52주 최저", p.low52 ? numFmt(p.low52) : null),
+    f("베타", p.beta ? p.beta.toFixed(2) : null),
+  ].join("");
+  const dy = p.dividends_by_year || [];
+  const mx = Math.max(...dy.map(x => x.amount), 0);
+  const divs = dy.length ? `<div class="sd-sec">
+      <div class="sd-sec-t">연도별 배당 <span class="muted">${cur}</span></div>
+      <div class="sd-divs">${dy.map(x => `<div class="sd-bar" title="${x.year} ${numFmt(x.amount)}">
+        <div class="b" style="height:${mx ? Math.max(4, x.amount / mx * 54) : 4}px"></div>
+        <div class="y">${x.year.slice(2)}</div></div>`).join("")}</div>
+      ${p.dividends && p.dividends.length ? `<div class="hint-line muted">최근 ${esc(p.dividends[p.dividends.length - 1].date)} · ${numFmt(p.dividends[p.dividends.length - 1].amount)} ${esc(cur)}</div>` : ""}
+    </div>` : "";
+  box.innerHTML = `<div class="sd-facts">${facts}</div>${divs}` +
+    (p.summary ? `<details class="help"><summary>회사 소개</summary><div class="help-body">${esc(p.summary)}</div></details>` : "");
+}
+
 function kpiBox(l, v, cls) { return `<div class="kpi"><div class="l">${l}</div><div class="v num ${cls || ""}">${v}</div></div>`; }
 
 /* ---------------- Dashboard ----------------
@@ -2273,6 +2415,146 @@ function symBindControls() {
   }
 }
 
+/* ---------------- 종목: 시장 검색 · 관심종목 ----------------
+   '내 종목'은 거래에서 나온 것(movements 재생), '국내주식/미국주식'은 상장목록
+   캐시(symbols 11,127개)에서 찾는다. 둘 다 같은 상세 모달로 들어간다. */
+let STOCK_SCOPE = "mine", WATCH_SET = new Set();
+
+function stockScopeApply() {
+  const mine = STOCK_SCOPE === "mine";
+  ["#pnlSum", "#pnlList"].forEach(id => { const el = $(id); if (el) el.hidden = !mine; });
+  ["#pnlScope", "#pnlCount"].forEach(id => { const el = $(id); if (el) el.style.display = mine ? "" : "none"; });
+  const q = $("#pnlQ"); if (q) q.style.display = mine ? "" : "none";
+  const mq = $("#mktQ"); if (mq) { mq.hidden = mine; if (!mine) mq.focus(); }
+  const ml = $("#mktList"); if (ml) ml.hidden = mine;
+  const sub = $("#stockSub");
+  if (sub) sub.textContent = mine
+    ? "거래한 적 있는 종목은 지금 안 들고 있어도 나옵니다"
+    : (STOCK_SCOPE === "kr" ? "국내 상장 종목을 찾아 관심종목에 담습니다"
+                            : "미국 상장 종목을 찾아 관심종목에 담습니다");
+  if (mine) renderSymMgrSafe(); else searchMarket();
+}
+const renderSymMgrSafe = () => { if (typeof PNL !== "undefined" && PNL) renderPnl(); };
+
+let _mktT;
+async function searchMarket() {
+  const box = $("#mktList"); if (!box) return;
+  const q = ($("#mktQ") && $("#mktQ").value || "").trim();
+  if (q.length < 1) {
+    box.innerHTML = `<div class="blank"><div class="t">종목을 찾아보세요</div>
+      <div class="d">종목명이나 티커 일부를 넣으면 상장목록에서 찾습니다. 누르면 차트·배당·기업정보가 열리고, ☆로 관심종목에 담습니다.</div></div>`;
+    return;
+  }
+  box.innerHTML = `<div class="card pad muted">찾는 중…</div>`;
+  let d;
+  try { d = await api(`api/symbols/search?market=${STOCK_SCOPE}&limit=40&q=` + encodeURIComponent(q)); }
+  catch (_) { box.innerHTML = `<div class="blank"><div class="t">찾지 못했습니다</div><div class="d">잠시 후 다시 시도해 주세요.</div></div>`; return; }
+  const items = (d.items || []).filter(x => x.ticker);
+  if (!items.length) {
+    box.innerHTML = `<div class="blank"><div class="t">'${esc(q)}' 결과가 없습니다</div>
+      <div class="d">상장목록은 매주 월요일 새벽에 갱신됩니다. 설정 > 종목 별칭에서 지금 갱신할 수도 있습니다.</div></div>`;
+    return;
+  }
+  box.innerHTML = `<div class="sym-list">` + items.map(it => {
+    const on = WATCH_SET.has((it.ticker || "").toUpperCase());
+    return `<div class="sym-item">
+      <div class="sym-head">
+        <div class="sym-main">
+          <div class="sym-title mkt-open" data-ticker="${esc(it.ticker)}" data-name="${esc(it.name)}" data-market="${esc(it.market || "")}">${esc(it.name)}</div>
+          <div class="sym-alt">${esc(it.ticker)}${it.market ? " · " + esc(it.market) : ""}</div>
+        </div>
+        <button class="mini wsToggle${on ? " on" : ""}" data-ticker="${esc(it.ticker)}" data-name="${esc(it.name)}"
+          data-market="${esc(it.market || "")}" data-ccy="${esc(it.currency || (STOCK_SCOPE === "us" ? "USD" : "KRW"))}"
+          title="${on ? "관심종목에서 빼기" : "관심종목에 담기"}">${on ? "★ 담김" : "☆ 관심"}</button>
+      </div>
+    </div>`;
+  }).join("") + `</div>`;
+  box.querySelectorAll(".mkt-open").forEach(el => el.addEventListener("click", () =>
+    openStockModal(el.dataset.name, el.dataset.ticker, el.dataset.market)));
+  box.querySelectorAll(".wsToggle").forEach(b => b.addEventListener("click", () => toggleWatch(b.dataset)));
+}
+
+async function loadWatchSet() {
+  try {
+    const d = await api("api/watch/stocks");
+    WATCH_SET = new Set((d.rows || []).map(r => (r.ticker || "").toUpperCase()));
+    return d.rows || [];
+  } catch (_) { return []; }
+}
+
+async function toggleWatch(ds) {
+  const tk = (ds.ticker || "").toUpperCase();
+  if (WATCH_SET.has(tk)) {
+    const rows = await loadWatchSet();
+    const row = rows.find(r => (r.ticker || "").toUpperCase() === tk);
+    if (row) await api("api/watch/stocks/" + row.id, { method: "DELETE" });
+    toast("관심종목에서 뺐어요");
+  } else {
+    await api("api/watch/stocks", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ticker: tk, name: ds.name || tk, market: ds.market || null,
+                             currency: ds.ccy || "KRW" }) });
+    toast("관심종목에 담았어요");
+  }
+  await loadWatchSet();
+  if (STOCK_SCOPE !== "mine") searchMarket();
+  if ($("#view-watchstock") && $("#view-watchstock").classList.contains("active")) loadWatchStocks();
+}
+
+/* ---------------- 관심종목 화면 ---------------- */
+async function loadWatchStocks() {
+  const box = $("#wsList"); if (!box) return;
+  box.innerHTML = `<div class="card pad muted">불러오는 중…</div>`;
+  let rows;
+  try { rows = (await api("api/watch/stocks")).rows || []; }
+  catch (_) { box.innerHTML = `<div class="blank"><div class="t">불러오지 못했습니다</div><div class="d">잠시 후 다시 시도해 주세요.</div></div>`; return; }
+  WATCH_SET = new Set(rows.map(r => (r.ticker || "").toUpperCase()));
+  if ($("#wsCount")) $("#wsCount").textContent = rows.length ? `${rows.length}종목` : "";
+  if (!rows.length) {
+    box.innerHTML = `<div class="blank"><div class="t">담아 둔 종목이 없습니다</div>
+      <div class="d"><b>종목</b> 화면에서 국내주식·미국주식을 찾아 ☆를 누르면 여기 모입니다.
+        사면 거래내역에 들어가는 것만으로 보유 종목이 됩니다.</div></div>`;
+    return;
+  }
+  box.innerHTML = `<div class="sym-list">` + rows.map(r => {
+    const ccy = r.currency || "KRW";
+    const chg = r.change_pct == null ? "" :
+      `<span class="num ${r.change_pct >= 0 ? "gain" : "loss"}">${r.change_pct >= 0 ? "+" : ""}${r.change_pct.toFixed(2)}%</span>`;
+    const tgt = r.target_krw
+      ? `목표 ${money(r.target_krw, ccy)}` + (r.to_target_pct == null ? "" :
+          ` <span class="num ${r.to_target_pct <= 0 ? "gain" : "muted"}">(${r.to_target_pct > 0 ? "+" : ""}${r.to_target_pct.toFixed(1)}%)</span>`)
+      : `<span class="muted">목표가 없음</span>`;
+    return `<div class="sym-item">
+      <div class="sym-head">
+        <div class="sym-main">
+          <div class="sym-title mkt-open" data-ticker="${esc(r.ticker)}" data-name="${esc(r.name)}" data-market="${esc(r.market || "")}">${esc(r.name)}</div>
+          <div class="sym-alt">${esc(r.ticker)}${r.market ? " · " + esc(r.market) : ""} · ${tgt}</div>
+        </div>
+        <div class="ws-px">
+          <div class="num">${r.price ? money(r.price, ccy) : `<span class="muted">시세 없음</span>`}</div>
+          <div class="sym-alt">${chg}</div>
+        </div>
+        <input class="wsTarget" type="number" step="any" placeholder="목표가" value="${r.target_krw ?? ""}"
+               data-id="${r.id}" aria-label="목표가" title="목표가를 넣고 엔터">
+        <button class="mini del wsDel" data-id="${r.id}" data-name="${esc(r.name)}">빼기</button>
+      </div>
+    </div>`;
+  }).join("") + `</div>`;
+  box.querySelectorAll(".mkt-open").forEach(el => el.addEventListener("click", () =>
+    openStockModal(el.dataset.name, el.dataset.ticker, el.dataset.market)));
+  box.querySelectorAll(".wsDel").forEach(b => b.addEventListener("click", async () => {
+    if (!confirm(`'${b.dataset.name}'을(를) 관심종목에서 뺄까요?`)) return;
+    await api("api/watch/stocks/" + b.dataset.id, { method: "DELETE" });
+    toast("뺐어요"); loadWatchStocks();
+  }));
+  box.querySelectorAll(".wsTarget").forEach(inp => inp.addEventListener("change", async () => {
+    const v = inp.value.trim();
+    await api("api/watch/stocks/" + inp.dataset.id, { method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ticker: "-", name: "-", target_krw: v === "" ? null : +v }) });
+    toast("목표가 저장"); loadWatchStocks();
+  }));
+}
+
 async function symReload() { await loadAliases(); if (PORTFOLIO) renderHoldSummary(); renderHoldings("#investHoldings"); if (mState.loaded) loadMovements(); }
 async function chipDelName(nm) {   // 원래 이름을 이 티커에서 빼기(별칭 삭제 → 자동 해석)
   if (!confirm(`'${nm}'을(를) 이 티커에서 뺄까요?\n(별칭 삭제 → 자동 해석으로 되돌아갑니다)`)) return;
@@ -3511,7 +3793,8 @@ function applyReFilters() { reState.offset = 0; loadReTx(); }
 const VIEW_LOAD = {
   "view-assets": () => renderAssetList(),
   "view-tx": () => { if (!mState.loaded) { mState.loaded = true; loadMovementsTab(); } },
-  "view-stocks": () => loadPnl(),
+  "view-stocks": () => { loadPnl(); loadWatchSet(); },
+  "view-watchstock": () => loadWatchStocks(),
   "view-watch": () => { if (!reState.loaded) { reState.loaded = true; loadRealEstate(); } },
   "view-invest": () => { renderInvest(); loadFx(); },
   "view-trade": () => { if (!kisLoaded) { kisLoaded = true; loadKis(); } loadTrade(); },
@@ -3774,6 +4057,16 @@ async function init() {
     b.disabled = false; b.textContent = "재생성";
   });
   onEl("#pnlScope", "change", renderPnl);
+  {
+    const sc = $("#stockScope");
+    if (sc) sc.addEventListener("click", e => {
+      const b = e.target.closest("button[data-s]"); if (!b) return;
+      sc.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+      STOCK_SCOPE = b.dataset.s; stockScopeApply();
+    });
+    let t; const mq = $("#mktQ");
+    if (mq) mq.addEventListener("input", () => { clearTimeout(t); t = setTimeout(searchMarket, 250); });
+  }
   { let t; onEl("#pnlQ", "input", () => { clearTimeout(t); t = setTimeout(renderPnl, 200); }); }
   onEl("#pnlList", "click", e => {
     const a = e.target.closest(".stock-link"); if (a) openStockModal(a.dataset.stock);

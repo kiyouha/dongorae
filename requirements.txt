@@ -4,6 +4,7 @@ uvicorn[standard]>=0.29
 gunicorn>=21
 psycopg[binary]>=3.1
 finance-datareader>=0.9.90
+yfinance>=0.2.40        # 차트·배당·기업정보(보는 화면 전용, 평가는 FDR)
 openpyxl>=3.1
 requests>=2.31
 pdfplumber>=0.11

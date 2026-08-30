@@ -236,6 +236,18 @@ SCHEMA = [
         currency TEXT DEFAULT 'KRW'
     )""",
     "CREATE INDEX IF NOT EXISTS idx_symbols_name ON symbols (lower(name))",
+    # 관심종목 — 아직 안 산 종목을 담아 두고 목표가와 견준다. 보유는 movements가 말해 주므로
+    # 여기엔 '보고 싶은 것'만 넣는다(보유 여부와 무관).
+    """CREATE TABLE IF NOT EXISTS watch_stocks (
+        id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        ticker     TEXT NOT NULL UNIQUE,
+        name       TEXT NOT NULL,
+        market     TEXT,                         -- KRX | ETF/KR | NASDAQ | NYSE | AMEX
+        currency   TEXT NOT NULL DEFAULT 'KRW',
+        target_krw DOUBLE PRECISION,             -- 목표가(그 종목 통화 기준)
+        memo       TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )""",
     # 사용자 등록 별칭(증권사 한글명 → 티커). 미국 종목 한글명 등 자동피드에 없는 매핑. 재시작 불필요.
     """CREATE TABLE IF NOT EXISTS symbol_aliases (
         name     TEXT PRIMARY KEY,   -- normalize_name된 종목명
