@@ -603,8 +603,13 @@ details.help .help-body b { color: var(--ink); font-weight: var(--w-semi); }
 .mini.wsToggle.on { color: var(--c-coin); border-color: color-mix(in srgb, var(--c-coin) 45%, var(--line-strong)); }
 
 .sd-chart { margin-bottom: var(--sp-4); }
-.sd-canvas { height: 190px; }
-.sd-canvas canvas { width: 100%; height: 100%; display: block; }
+.sd-canvas { height: 240px; }
+.lc-box { height: 240px; }                 /* 분석 자산 추이 */              /* 캔들 + 아래 거래량이 같이 들어갈 높이 */
+.sd-tip {
+  height: 15px; font-size: var(--fs-2xs); color: var(--ink-2);
+  margin-top: 2px; white-space: nowrap; overflow: hidden;
+}
+.sd-tip b { font-weight: var(--w-semi); }
 .sd-last { margin-left: auto; display: flex; align-items: baseline; gap: var(--sp-2); font-size: var(--fs-sm); }
 .sd-last .muted { font-size: var(--fs-2xs); }
 
@@ -630,7 +635,7 @@ details.help .help-body b { color: var(--ink); font-weight: var(--w-semi); }
 .wsTarget { width: 104px; height: 26px; font-size: var(--fs-2xs); flex: none; }
 
 @media (max-width: 700px) {
-  .sd-canvas { height: 160px; }
+  .sd-canvas { height: 200px; }
   .ws-px { min-width: 0; }
   .wsTarget { width: 84px; }
 }
@@ -691,8 +696,7 @@ details.help .help-body b { color: var(--ink); font-weight: var(--w-semi); }
 }
 
 /* 매매 차트 */
-.tr-chartbox { position: relative; height: 210px; }
-.tr-chartbox canvas { width: 100%; height: 100%; display: block; }
+.tr-chartbox { position: relative; height: 230px; }
 .page-hd .acts.chart-now { gap: var(--sp-4); font-size: var(--fs-xs); color: var(--muted); }
 .page-hd .acts.chart-now b { color: var(--ink); }
 .page-hd .acts.chart-now .gain b { color: var(--gain); }

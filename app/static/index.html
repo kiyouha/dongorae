@@ -8,8 +8,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="static/img/icon-192.png?v=1">
   <link rel="apple-touch-icon" sizes="180x180" href="static/img/icon-180.png?v=1">
   <meta name="theme-color" content="#08090a">
-  <link rel="stylesheet" href="static/styles.css?v=20260830g">
-  <link rel="stylesheet" href="/shared/base.css?v=20260830g">
+  <link rel="stylesheet" href="static/styles.css?v=20260830j">
+  <link rel="stylesheet" href="/shared/base.css?v=20260830j">
 </head>
 <body>
   <div class="app">
@@ -765,6 +765,9 @@
 
   <div class="toast" id="toast"></div>
   <div class="busy" id="busy"><span class="busy-dot"></span>반영중…</div>
-  <script src="static/app.js?v=20260830g"></script>
+  <!-- 주식 차트 — TradingView Lightweight Charts (Apache-2.0). CDN이 아니라 로컬에 둔다:
+       집 서버라 바깥이 끊겨도 화면은 떠야 하고, 버전이 말없이 바뀌면 안 된다. -->
+  <script src="static/vendor/lightweight-charts.standalone.production.js?v=5.0.9"></script>
+  <script src="static/app.js?v=20260830j"></script>
 </body>
 </html>

@@ -228,7 +228,8 @@ function openModal(title, bodyHtml) {
   $("#modalBody").innerHTML = bodyHtml;
   $("#modal").classList.remove("hidden");
 }
-function closeModal() { $("#modal").classList.add("hidden"); }
+function closeModal() {
+  sdDestroyChart(); MODAL_STOCK = null; $("#modal").classList.add("hidden"); }
 const KIND_CLS = { "매수": "loss", "매도": "gain", "배당": "gain", "입고": "muted", "출고": "muted" };
 /* 종목 상세 — 내 거래이력(자체 데이터) + 차트·배당·기업정보(yfinance).
    시장 데이터는 실패해도 거래이력은 보여야 한다. 그래서 두 요청을 따로 처리한다. */
@@ -282,7 +283,8 @@ async function openStockModal(symbol, ticker, market) {
         </span>
         <span class="sd-last" id="sdLast"></span>
       </div>
-      <div class="sd-canvas"><canvas id="sdCanvas"></canvas></div>
+      <div class="sd-canvas" id="sdCanvas"></div>
+      <div class="sd-tip" id="sdTip"></div>
     </div>
     <div id="sdInfo"></div>` + trades;
 
@@ -319,41 +321,54 @@ async function loadStockChart() {
   if (last) last.innerHTML = `<b class="num">${money(d.last, "")}</b>
     <span class="num ${up ? "gain" : "loss"}">${up ? "+" : ""}${d.change_pct.toFixed(2)}%</span>
     <span class="muted">${rows.length}${d.interval === "1d" ? "일" : d.interval === "1wk" ? "주" : "개월"}</span>`;
-  drawStockChart(rows, up);
+  drawStockChart(rows, d.interval);
 }
 
-function drawStockChart(rows, up) {
-  const cv = $("#sdCanvas"); if (!cv) return;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2), w = cv.clientWidth, h = cv.clientHeight;
-  if (!w || !h) return;
-  cv.width = w * dpr; cv.height = h * dpr;
-  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
-  const pad = { l: 6, r: 62, t: 10, b: 18 };
-  const cs = rows.map(r => r.c);
-  const min = Math.min(...cs), max = Math.max(...cs);
-  const lo = min - (max - min) * 0.06 || min * 0.98, hi = max + (max - min) * 0.06 || max * 1.02;
-  const X = i => pad.l + (w - pad.l - pad.r) * (rows.length < 2 ? 0.5 : i / (rows.length - 1));
-  const Y = v => pad.t + (h - pad.t - pad.b) * (1 - (v - lo) / ((hi - lo) || 1));
-  const cvv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#888";
-  const col = cvv(up ? "--c-red" : "--c-blue");     // 오르면 빨강, 내리면 파랑(국내 관행)
-  // 면
-  g.beginPath(); g.moveTo(X(0), Y(lo));
-  rows.forEach((r, i) => g.lineTo(X(i), Y(r.c)));
-  g.lineTo(X(rows.length - 1), Y(lo)); g.closePath();
-  const grad = g.createLinearGradient(0, pad.t, 0, h - pad.b);
-  grad.addColorStop(0, rgba(col, .22)); grad.addColorStop(1, rgba(col, 0));
-  g.fillStyle = grad; g.fill();
-  // 선
-  g.beginPath();
-  rows.forEach((r, i) => i ? g.lineTo(X(i), Y(r.c)) : g.moveTo(X(i), Y(r.c)));
-  g.strokeStyle = col; g.lineWidth = 1.8; g.stroke();
-  // 눈금
-  g.font = "10px system-ui"; g.fillStyle = cvv("--muted"); g.textAlign = "left";
-  g.fillText(numFmt(hi), w - pad.r + 4, pad.t + 8);
-  g.fillText(numFmt(lo), w - pad.r + 4, h - pad.b);
-  g.textAlign = "center";
-  g.fillText(rows[0].d.slice(2, 7), X(0) + 14, h - 4);
-  g.fillText(rows[rows.length - 1].d.slice(2, 7), X(rows.length - 1) - 14, h - 4);
+/* 캔들·거래량 — TradingView Lightweight Charts(오픈소스). 손으로 그리던 선그래프로는
+   축 눈금·크로스헤어·거래량을 제대로 못 준다. 색만 우리 팔레트에 맞춘다.
+   국내 관행대로 오르면 빨강(--c-red), 내리면 파랑(--c-blue). */
+function sdDestroyChart() {
+  const held = LC_CHARTS.get("sdCanvas");
+  if (held) { try { held.chart.remove(); } catch (_) { } if (held.ro) held.ro.disconnect(); LC_CHARTS.delete("sdCanvas"); }
+}
+
+function drawStockChart(rows, interval) {
+  const box = $("#sdCanvas"); if (!box) return;
+  const LC = window.LightweightCharts;
+  const chart = lcCreate(box, { rightPriceScale: { scaleMargins: { top: .08, bottom: .26 } } });
+  if (!chart) {
+    box.innerHTML = `<div class="blank"><div class="t">차트를 불러오지 못했습니다</div>
+      <div class="d">새로고침(⌘⇧R)해도 안 되면 static/vendor 의 차트 파일이 배포됐는지 확인하세요.</div></div>`;
+    return;
+  }
+  const t = lcTheme();
+  const candles = chart.addSeries(LC.CandlestickSeries, {
+    upColor: t.up, downColor: t.down, borderUpColor: t.up, borderDownColor: t.down,
+    wickUpColor: t.up, wickDownColor: t.down,
+  });
+  candles.setData(rows.map(r => ({ time: r.d, open: r.o, high: r.h, low: r.l, close: r.c })));
+
+  if (rows.some(r => r.v)) {                     // 거래량은 아래 22%에 따로 깐다
+    const vol = chart.addSeries(LC.HistogramSeries, {
+      priceFormat: { type: "volume" }, priceScaleId: "vol",
+      lastValueVisible: false, priceLineVisible: false,
+    });
+    chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
+    vol.setData(rows.map(r => ({ time: r.d, value: r.v, color: rgba(r.c >= r.o ? t.up : t.down, .35) })));
+  }
+  chart.timeScale().fitContent();
+
+  // 크로스헤어를 따라 그 봉의 시·고·저·종을 한 줄로 적는다(툴팁 상자 대신).
+  const tip = $("#sdTip");
+  chart.subscribeCrosshairMove(param => {
+    if (!tip) return;
+    const b = param.time && param.seriesData && param.seriesData.get(candles);
+    tip.innerHTML = b
+      ? `<span class="muted">${param.time}</span> 시 <b class="num">${numFmt(b.open)}</b>`
+        + ` 고 <b class="num">${numFmt(b.high)}</b> 저 <b class="num">${numFmt(b.low)}</b>`
+        + ` 종 <b class="num">${numFmt(b.close)}</b>`
+      : "";
+  });
 }
 
 async function loadStockProfile() {
@@ -1244,7 +1259,7 @@ async function trChart(symbol, maw, k) {
         <span class="gain">매수 <b class="num">${won(d.buy)}</b></span>
         <span class="loss">매도 <b class="num">${won(d.sell)}</b></span>
       </span></div>
-    <div class="tr-chartbox"><canvas id="trCanvas"></canvas></div>
+    <div class="tr-chartbox" id="trCanvas"></div>
     <div class="chart-legend">
       <span><i class="ln" style="background:var(--accent)"></i>종가</span>
       <span><i class="ln dash" style="background:var(--muted)"></i>MA</span>
@@ -1254,46 +1269,72 @@ async function trChart(symbol, maw, k) {
   drawTrChart(d.bars);
 }
 function drawTrChart(bars) {
-  const cv = $("#trCanvas"); if (!cv) return;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2), w = cv.clientWidth, h = cv.clientHeight;
-  cv.width = w * dpr; cv.height = h * dpr; const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
-  const pad = { l: 8, r: 54, t: 10, b: 18 };
-  const vals = bars.flatMap(b => [b.close, b.ma, b.buy, b.sell].filter(x => x != null));
-  const min = Math.min(...vals), max = Math.max(...vals), lo = min - (max - min) * 0.05, hi = max + (max - min) * 0.05;
-  const X = i => pad.l + (w - pad.l - pad.r) * (i / (bars.length - 1));
-  const Y = v => pad.t + (h - pad.t - pad.b) * (1 - (v - lo) / ((hi - lo) || 1));
-  const cvv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#888";
-  const line = (key, color, dash, lw) => {
-    g.beginPath(); let started = false;
-    bars.forEach((b, i) => { const v = b[key]; if (v == null) return; const x = X(i), y = Y(v); started ? g.lineTo(x, y) : (g.moveTo(x, y), started = true); });
-    g.strokeStyle = color; g.lineWidth = lw || 1.2; g.setLineDash(dash || []); g.stroke(); g.setLineDash([]);
+  const el = $("#trCanvas"); if (!el) return;
+  const LC = window.LightweightCharts;
+  const chart = lcCreate(el, { rightPriceScale: { scaleMargins: { top: .12, bottom: .12 } } });
+  if (!chart) { el.innerHTML = `<div class="blank"><div class="t">차트를 불러오지 못했습니다</div><div class="d">새로고침해 보세요.</div></div>`; return; }
+  const t = lcTheme();
+  const mk = (color, width, dashed, data) => {
+    const sr = chart.addSeries(LC.LineSeries, {
+      color, lineWidth: width, priceLineVisible: false, lastValueVisible: false,
+      lineStyle: dashed ? LC.LineStyle.Dashed : LC.LineStyle.Solid,
+      crosshairMarkerVisible: !dashed,
+    });
+    sr.setData(data);
+    return sr;
   };
-  line("buy", cvv("--gain"), [4, 3]); line("sell", cvv("--loss"), [4, 3]);
-  line("ma", cvv("--muted"), [2, 2]); line("close", cvv("--accent"), [], 1.8);
-  const last = bars[bars.length - 1];
-  g.beginPath(); g.arc(X(bars.length - 1), Y(last.close), 3.5, 0, 7); g.fillStyle = cvv("--accent"); g.fill();
-  g.font = "10px system-ui"; g.fillStyle = cvv("--muted"); g.textAlign = "left";
-  g.fillText(won(hi), w - pad.r + 3, pad.t + 8); g.fillText(won(lo), w - pad.r + 3, h - pad.b);
+  const pick = k => bars.filter(b => b[k] != null).map(b => ({ time: b.date, value: b[k] }));
+  mk(rgba(t.up, .8), 1, true, pick("buy"));      // 매수밴드
+  mk(rgba(t.down, .8), 1, true, pick("sell"));   // 매도밴드
+  mk(t.muted, 1, true, pick("ma"));              // 이동평균
+  const close = mk(t.green, 2, false, pick("close"));
+  close.applyOptions({ lastValueVisible: true, priceLineVisible: true, priceLineColor: rgba(t.green, .5) });
+  chart.timeScale().fitContent();
 }
 
-/* ---------------- 차트(무라이브러리 SVG) ---------------- */
-function svgLine(data, vk, lk) {
-  const W = 700, H = 200, PL = 58, PR = 14, PT = 14, PB = 24;
-  const ys = data.map(d => +d[vk]); const min = Math.min(...ys), max = Math.max(...ys);
-  const pad = (max - min) * 0.12 || Math.abs(max) * 0.1 || 1; const lo = min - pad, hi = max + pad;
-  const X = i => PL + (W - PL - PR) * (data.length < 2 ? 0.5 : i / (data.length - 1));
-  const Y = v => PT + (H - PT - PB) * (1 - (v - lo) / ((hi - lo) || 1));
-  const line = data.map((d, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(+d[vk]).toFixed(1)}`).join("");
-  const area = `M${X(0).toFixed(1)},${Y(lo).toFixed(1)}` + data.map((d, i) => `L${X(i).toFixed(1)},${Y(+d[vk]).toFixed(1)}`).join("") + `L${X(data.length - 1).toFixed(1)},${Y(lo).toFixed(1)}Z`;
-  const dots = data.map((d, i) => `<circle cx="${X(i).toFixed(1)}" cy="${Y(+d[vk]).toFixed(1)}" r="3" fill="var(--accent)"><title>${d[lk]} ${won(+d[vk])}원</title></circle>`).join("");
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" class="svg-fit">
-    <path d="${area}" fill="var(--accent)" opacity="0.08"/>
-    <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2"/>${dots}
-    <text x="4" y="${(Y(hi) + 9).toFixed(0)}" font-size="10" fill="var(--muted)">${won(hi)}</text>
-    <text x="4" y="${Y(lo).toFixed(0)}" font-size="10" fill="var(--muted)">${won(lo)}</text>
-    <text x="${PL}" y="${H - 6}" font-size="10" fill="var(--muted)">${data[0][lk]}</text>
-    <text x="${W - PR}" y="${H - 6}" font-size="10" fill="var(--muted)" text-anchor="end">${data[data.length - 1][lk]}</text></svg>`;
+/* ── 차트 공통(Lightweight Charts) ────────────────────────────────
+   축 눈금·크로스헤어·툴팁을 손으로 그리지 않는다. 색만 우리 팔레트로 맞춘다.
+   대시보드 히어로 차트는 억원 축·연도 구분선까지 직접 짜 둔 것이라 그대로 둔다. */
+const LC_CHARTS = new Map();          // el.id → chart (다시 그릴 때 지우려고)
+
+function lcTheme() {
+  const v = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  return { line: v("--line") || "#232529", strong: v("--line-strong") || "#33353b",
+           muted: v("--muted") || "#8a8f98", surface3: v("--surface-3") || "#232428",
+           up: v("--c-red") || "#df645f", down: v("--c-blue") || "#6998cc",
+           green: v("--c-green") || "#66bd9d" };
 }
+
+function lcCreate(el, extra) {
+  if (!window.LightweightCharts || !el) return null;
+  const LC = window.LightweightCharts, t = lcTheme();
+  const old = LC_CHARTS.get(el.id);
+  if (old) { try { old.chart.remove(); } catch (_) { } if (old.ro) old.ro.disconnect(); }
+  el.innerHTML = "";
+  const chart = LC.createChart(el, Object.assign({
+    layout: { background: { type: LC.ColorType.Solid, color: "transparent" },
+              textColor: t.muted, fontSize: 10,
+              fontFamily: getComputedStyle(document.body).fontFamily },
+    grid: { vertLines: { color: t.line }, horzLines: { color: t.line } },
+    rightPriceScale: { borderColor: t.strong },
+    timeScale: { borderColor: t.strong, timeVisible: false, fixLeftEdge: true, fixRightEdge: true },
+    crosshair: { mode: LC.CrosshairMode.Normal,
+                 vertLine: { color: t.muted, width: 1, style: LC.LineStyle.Dashed, labelBackgroundColor: t.surface3 },
+                 horzLine: { color: t.muted, width: 1, style: LC.LineStyle.Dashed, labelBackgroundColor: t.surface3 } },
+    localization: { locale: "ko-KR" },
+    handleScale: { axisPressedMouseMove: false },
+    width: el.clientWidth || 320, height: el.clientHeight || 200,
+  }, extra || {}));
+  let ro = null;
+  if (window.ResizeObserver) {
+    ro = new ResizeObserver(() => { if (el.clientWidth) chart.applyOptions({ width: el.clientWidth, height: el.clientHeight }); });
+    ro.observe(el);
+  }
+  LC_CHARTS.set(el.id, { chart, ro });
+  return chart;
+}
+
+
 function svgBars(data, vk, lk) {
   const W = 700, H = 200, PL = 58, PR = 14, PT = 14, PB = 30, n = data.length;
   const max = Math.max(...data.map(d => +d[vk]), 1), bw = (W - PL - PR) / n * 0.65;
@@ -1313,7 +1354,17 @@ async function renderNavChart(sel = "#navChart") {
       <div class="d">설정 &gt; 데이터 &gt; <b>자산 추이 채우기</b>를 한 번 돌리면 최초 거래월부터 채워집니다.</div></div>`;
     return;
   }
-  el.innerHTML = svgLine(rows, "total_krw", "month");
+  el.innerHTML = `<div class="lc-box" id="navAreaBox"></div>`;
+  const LC = window.LightweightCharts;
+  const chart = lcCreate($("#navAreaBox"), { rightPriceScale: { scaleMargins: { top: .1, bottom: .08 } } });
+  if (!chart) { el.innerHTML = `<div class="blank"><div class="t">차트를 불러오지 못했습니다</div><div class="d">새로고침해 보세요.</div></div>`; return; }
+  const t = lcTheme();
+  const area = chart.addSeries(LC.AreaSeries, {
+    lineColor: t.green, topColor: rgba(t.green, .28), bottomColor: rgba(t.green, 0), lineWidth: 2,
+    priceFormat: { type: "custom", formatter: v => axEok(v) },   // 축도 억원으로
+  });
+  area.setData(rows.map(r => ({ time: r.month + "-01", value: r.total_krw })));
+  chart.timeScale().fitContent();
 }
 /* 배당·이자 — 전 기간 월별. 12개월만 보여 주면 '올해 얼마 받았나'만 알 수 있고
    해가 갈수록 늘고 있는지는 못 본다. 막대가 촘촘해지면 폭을 줄이고 연도만 적는다.
