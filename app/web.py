@@ -1350,6 +1350,53 @@ class DisplayIn(BaseModel):
     display: str = ""        # 빈 값이면 표시명 삭제(원래 이름으로)
 
 
+@app.post("/api/symbols/display/auto")
+def api_symbols_display_auto(request: Request):
+    """표시명을 자동으로 채운다. 사람이 정해 둔 표시명은 건드리지 않는다.
+      · 국내 — KRX 상장목록의 정식명. 네이버가 쓰는 이름이 이것이다.
+        ('에스케이하이닉스보통주' → 'SK하이닉스', '미래에셋 TIGER 미국S&P500증권상장지수…' → 'TIGER 미국S&P500')
+      · 미국 — 상장목록은 영문('Intel Corp')이라 증권사가 준 한글명이 낫다.
+        같은 티커에 이름이 여러 개면(팔란티어 테크 / 팔란티어 테크놀로지스) 짧은 쪽으로 모은다."""
+    if not _require_admin(request):
+        return JSONResponse({"error": "관리자 전용"}, status_code=403)
+    changed = []
+    with _conn() as conn:
+        have = {r["skey"] for r in conn.execute("SELECT skey FROM symbol_display").fetchall()}
+        rows = conn.execute(
+            """SELECT p.ticker, p.currency, p.name, s.name AS krx_name
+               FROM products p LEFT JOIN symbols s ON s.ticker = p.ticker
+               WHERE p.category = 'equity' AND COALESCE(p.ticker,'') <> ''""").fetchall()
+        best = {}
+        for r in rows:
+            tk = r["ticker"]
+            if tk in have:                     # 사람이 정한 이름이 있으면 그대로 둔다
+                continue
+            if (r["currency"] or "KRW").upper() == "KRW":
+                cand = r["krx_name"]
+            else:
+                cand = r["name"]               # 증권사 한글명 — 여럿이면 짧은 쪽
+                prev = best.get(tk)
+                if prev and len(prev) <= len(cand):
+                    continue
+            if cand and cand != r["name"]:
+                best[tk] = cand
+            elif cand and tk not in best:
+                best[tk] = cand
+        for tk, disp in best.items():
+            # 그 티커의 상품 이름이 '전부' 이미 같을 때만 건너뛴다. 한 행만 보면
+            # 같은 티커에 이름이 둘인 경우(미래에셋 TIGER…/TIGER…)를 놓친다.
+            names = {r["name"] for r in conn.execute(
+                "SELECT name FROM products WHERE ticker = %s", (tk,)).fetchall()}
+            if names and names == {disp}:
+                continue
+            conn.execute(
+                """INSERT INTO symbol_display(skey, display) VALUES (%s,%s)
+                   ON CONFLICT (skey) DO UPDATE SET display = EXCLUDED.display""", (tk, disp))
+            changed.append({"ticker": tk, "display": disp})
+        conn.commit()
+    return {"ok": True, "changed": changed}
+
+
 @app.post("/api/symbols/display")
 def api_symbols_display_set(item: DisplayIn, request: Request):
     """종목 표시명 등록/삭제. 관리자 전용."""

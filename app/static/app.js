@@ -2495,6 +2495,20 @@ function symBindControls() {
       renderSymMgr();
     });
   }
+  const auto = $("#symAutoName");
+  if (auto && !auto._bound) {
+    auto._bound = true;
+    auto.addEventListener("click", async () => {
+      auto.disabled = true; auto.textContent = "정리 중…";
+      try {
+        const r = await api("api/symbols/display/auto", { method: "POST" });
+        const n = (r.changed || []).length;
+        toast(n ? `${n}종목 표시명을 정리했어요` : "정리할 이름이 없습니다");
+        if (n) await symReload();
+      } catch (_) { toast("정리하지 못했습니다"); }
+      auto.disabled = false; auto.textContent = "이름 정리";
+    });
+  }
   const open = $("#symAddOpen"), card = $("#symAddCard"), close = $("#symAddClose");
   if (open && card && !open._bound) {
     open._bound = true;
