@@ -1,3 +1,93 @@
+/* ---------------- 종목: 시장 검색 · 관심종목 ----------------
+   '내 종목'은 거래에서 나온 것(movements 재생), '국내주식/미국주식'은 상장목록
+   캐시(symbols 11,127개)에서 찾는다. 둘 다 같은 상세 모달로 들어간다. */
+let STOCK_SCOPE = "mine", WATCH_SET = new Set(), WATCH_GROUPS = [], WS_GROUP = null;
+
+function stockScopeApply() {
+  const mine = STOCK_SCOPE === "mine";
+  ["#pnlSum", "#pnlList"].forEach(id => { const el = $(id); if (el) el.hidden = !mine; });
+  ["#pnlScope", "#pnlCount"].forEach(id => { const el = $(id); if (el) el.style.display = mine ? "" : "none"; });
+  const q = $("#pnlQ"); if (q) q.style.display = mine ? "" : "none";
+  const mq = $("#mktQ"); if (mq) { mq.hidden = mine; if (!mine) mq.focus(); }
+  const ml = $("#mktList"); if (ml) ml.hidden = mine;
+  const sub = $("#stockSub");
+  if (sub) sub.textContent = mine
+    ? "거래한 적 있는 종목은 지금 안 들고 있어도 나옵니다"
+    : (STOCK_SCOPE === "kr" ? "국내 상장 종목을 찾아 관심종목에 담습니다"
+                            : "미국 상장 종목을 찾아 관심종목에 담습니다");
+  if (mine) renderSymMgrSafe(); else searchMarket();
+}
+const renderSymMgrSafe = () => { if (typeof PNL !== "undefined" && PNL) renderPnl(); };
+
+let _mktT;
+async function searchMarket() {
+  const box = $("#mktList"); if (!box) return;
+  const q = ($("#mktQ") && $("#mktQ").value || "").trim();
+  if (q.length < 1) {
+    box.innerHTML = `<div class="blank"><div class="t">종목을 찾아보세요</div>
+      <div class="d">종목명이나 티커 일부를 넣으면 상장목록에서 찾습니다. 누르면 차트·배당·기업정보가 열리고, ☆로 관심종목에 담습니다.</div></div>`;
+    return;
+  }
+  box.innerHTML = `<div class="card pad muted">찾는 중…</div>`;
+  let d;
+  try { d = await api(`api/symbols/search?market=${STOCK_SCOPE}&limit=40&q=` + encodeURIComponent(q)); }
+  catch (_) { box.innerHTML = `<div class="blank"><div class="t">찾지 못했습니다</div><div class="d">잠시 후 다시 시도해 주세요.</div></div>`; return; }
+  const items = (d.items || []).filter(x => x.ticker);
+  if (!items.length) {
+    box.innerHTML = `<div class="blank"><div class="t">'${esc(q)}' 결과가 없습니다</div>
+      <div class="d">상장목록은 매주 월요일 새벽에 갱신됩니다. 설정 > 종목 별칭에서 지금 갱신할 수도 있습니다.</div></div>`;
+    return;
+  }
+  box.innerHTML = `<div class="sym-list">` + items.map(it => {
+    const on = WATCH_SET.has((it.ticker || "").toUpperCase());
+    return `<div class="sym-item">
+      <div class="sym-head">
+        <div class="sym-main">
+          <div class="sym-title mkt-open" data-ticker="${esc(it.ticker)}" data-name="${esc(it.name)}" data-market="${esc(it.market || "")}">${esc(it.name)}</div>
+          <div class="sym-alt">${esc(it.ticker)}${it.market ? " · " + esc(it.market) : ""}</div>
+        </div>
+        <button class="mini wsToggle${on ? " on" : ""}" data-ticker="${esc(it.ticker)}" data-name="${esc(it.name)}"
+          data-market="${esc(it.market || "")}" data-ccy="${esc(it.currency || (STOCK_SCOPE === "us" ? "USD" : "KRW"))}"
+          title="${on ? "관심종목에서 빼기" : "관심종목에 담기"}">${on ? "★ 담김" : "☆ 관심"}</button>
+      </div>
+    </div>`;
+  }).join("") + `</div>`;
+  box.querySelectorAll(".mkt-open").forEach(el => el.addEventListener("click", () =>
+    openStockModal(el.dataset.name, el.dataset.ticker, el.dataset.market)));
+  box.querySelectorAll(".wsToggle").forEach(b => b.addEventListener("click", () => toggleWatch(b.dataset)));
+}
+
+async function loadWatchSet() {
+  try {
+    const d = await api("api/watch/stocks");
+    WATCH_GROUPS = d.groups || [];
+    // ☆ 표시는 '사람이 담은 그룹'만 본다. 보유 중은 자동이라 별을 켜 봐야 뺄 수가 없다.
+    WATCH_SET = new Set(WATCH_GROUPS.filter(g => !g.virtual)
+      .flatMap(g => g.rows.map(r => (r.ticker || "").toUpperCase())));
+    return WATCH_GROUPS;
+  } catch (_) { return []; }
+}
+
+async function toggleWatch(ds) {
+  const tk = (ds.ticker || "").toUpperCase();
+  if (WATCH_SET.has(tk)) {
+    const groups = await loadWatchSet();
+    for (const g of groups.filter(x => !x.virtual)) {
+      const row = g.rows.find(r => (r.ticker || "").toUpperCase() === tk);
+      if (row) await api("api/watch/stocks/" + row.id, { method: "DELETE" });
+    }
+    toast("관심종목에서 뺐어요");
+  } else {
+    await api("api/watch/stocks", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ticker: tk, name: ds.name || tk, market: ds.market || null,
+                             currency: ds.ccy || "KRW", group_id: WS_GROUP || null }) });
+    toast("관심종목에 담았어요");
+  }
+  await loadWatchSet();
+  if (STOCK_SCOPE !== "mine") searchMarket();
+  if ($("#view-watchstock") && $("#view-watchstock").classList.contains("active")) loadWatchStocks();
+}
+
 /* ---------------- 관심종목 화면 ----------------
    맨 위 '보유 중'은 거래내역에서 만든 자동 그룹이다 — 사면 들어오고 팔면 빠진다.
    그 아래는 사람이 만든 그룹. 시세·섹터·배당은 전부 DB에서 읽는다(외부 호출 없음). */
@@ -2531,151 +2621,6 @@ function symBindControls() {
     open.addEventListener("click", () => { card.hidden = !card.hidden; if (!card.hidden) $("#alName").focus(); });
     if (close) close.addEventListener("click", () => { card.hidden = true; });
   }
-}
-
-/* ---------------- 종목: 시장 검색 · 관심종목 ----------------
-   '내 종목'은 거래에서 나온 것(movements 재생), '국내주식/미국주식'은 상장목록
-   캐시(symbols 11,127개)에서 찾는다. 둘 다 같은 상세 모달로 들어간다. */
-let STOCK_SCOPE = "mine", WATCH_SET = new Set(), WATCH_GROUPS = [], WS_GROUP = null;
-
-function stockScopeApply() {
-  const mine = STOCK_SCOPE === "mine";
-  ["#pnlSum", "#pnlList"].forEach(id => { const el = $(id); if (el) el.hidden = !mine; });
-  ["#pnlScope", "#pnlCount"].forEach(id => { const el = $(id); if (el) el.style.display = mine ? "" : "none"; });
-  const q = $("#pnlQ"); if (q) q.style.display = mine ? "" : "none";
-  const mq = $("#mktQ"); if (mq) { mq.hidden = mine; if (!mine) mq.focus(); }
-  const ml = $("#mktList"); if (ml) ml.hidden = mine;
-  const sub = $("#stockSub");
-  if (sub) sub.textContent = mine
-    ? "거래한 적 있는 종목은 지금 안 들고 있어도 나옵니다"
-    : (STOCK_SCOPE === "kr" ? "국내 상장 종목을 찾아 관심종목에 담습니다"
-                            : "미국 상장 종목을 찾아 관심종목에 담습니다");
-  if (mine) renderSymMgrSafe(); else searchMarket();
-}
-const renderSymMgrSafe = () => { if (typeof PNL !== "undefined" && PNL) renderPnl(); };
-
-let _mktT;
-async function searchMarket() {
-  const box = $("#mktList"); if (!box) return;
-  const q = ($("#mktQ") && $("#mktQ").value || "").trim();
-  if (q.length < 1) {
-    box.innerHTML = `<div class="blank"><div class="t">종목을 찾아보세요</div>
-      <div class="d">종목명이나 티커 일부를 넣으면 상장목록에서 찾습니다. 누르면 차트·배당·기업정보가 열리고, ☆로 관심종목에 담습니다.</div></div>`;
-    return;
-  }
-  box.innerHTML = `<div class="card pad muted">찾는 중…</div>`;
-  let d;
-  try { d = await api(`api/symbols/search?market=${STOCK_SCOPE}&limit=40&q=` + encodeURIComponent(q)); }
-  catch (_) { box.innerHTML = `<div class="blank"><div class="t">찾지 못했습니다</div><div class="d">잠시 후 다시 시도해 주세요.</div></div>`; return; }
-  const items = (d.items || []).filter(x => x.ticker);
-  if (!items.length) {
-    box.innerHTML = `<div class="blank"><div class="t">'${esc(q)}' 결과가 없습니다</div>
-      <div class="d">상장목록은 매주 월요일 새벽에 갱신됩니다. 설정 > 종목 별칭에서 지금 갱신할 수도 있습니다.</div></div>`;
-    return;
-  }
-  box.innerHTML = `<div class="sym-list">` + items.map(it => {
-    const on = WATCH_SET.has((it.ticker || "").toUpperCase());
-    return `<div class="sym-item">
-      <div class="sym-head">
-        <div class="sym-main">
-          <div class="sym-title mkt-open" data-ticker="${esc(it.ticker)}" data-name="${esc(it.name)}" data-market="${esc(it.market || "")}">${esc(it.name)}</div>
-          <div class="sym-alt">${esc(it.ticker)}${it.market ? " · " + esc(it.market) : ""}</div>
-        </div>
-        <button class="mini wsToggle${on ? " on" : ""}" data-ticker="${esc(it.ticker)}" data-name="${esc(it.name)}"
-          data-market="${esc(it.market || "")}" data-ccy="${esc(it.currency || (STOCK_SCOPE === "us" ? "USD" : "KRW"))}"
-          title="${on ? "관심종목에서 빼기" : "관심종목에 담기"}">${on ? "★ 담김" : "☆ 관심"}</button>
-      </div>
-    </div>`;
-  }).join("") + `</div>`;
-  box.querySelectorAll(".mkt-open").forEach(el => el.addEventListener("click", () =>
-    openStockModal(el.dataset.name, el.dataset.ticker, el.dataset.market)));
-  box.querySelectorAll(".wsToggle").forEach(b => b.addEventListener("click", () => toggleWatch(b.dataset)));
-}
-
-async function loadWatchSet() {
-  try {
-    const d = await api("api/watch/stocks");
-    WATCH_GROUPS = d.groups || [];
-    // ☆ 표시는 '사람이 담은 그룹'만 본다. 보유 중은 자동이라 별을 켜 봐야 뺄 수가 없다.
-    WATCH_SET = new Set(WATCH_GROUPS.filter(g => !g.virtual)
-      .flatMap(g => g.rows.map(r => (r.ticker || "").toUpperCase())));
-    return WATCH_GROUPS;
-  } catch (_) { return []; }
-}
-
-async function toggleWatch(ds) {
-  const tk = (ds.ticker || "").toUpperCase();
-  if (WATCH_SET.has(tk)) {
-    const groups = await loadWatchSet();
-    for (const g of groups.filter(x => !x.virtual)) {
-      const row = g.rows.find(r => (r.ticker || "").toUpperCase() === tk);
-      if (row) await api("api/watch/stocks/" + row.id, { method: "DELETE" });
-    }
-    toast("관심종목에서 뺐어요");
-  } else {
-    await api("api/watch/stocks", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ticker: tk, name: ds.name || tk, market: ds.market || null,
-                             currency: ds.ccy || "KRW", group_id: WS_GROUP || null }) });
-    toast("관심종목에 담았어요");
-  }
-  await loadWatchSet();
-  if (STOCK_SCOPE !== "mine") searchMarket();
-  if ($("#view-watchstock") && $("#view-watchstock").classList.contains("active")) loadWatchStocks();
-}
-
-/* ---------------- 관심종목 화면 ---------------- */
-async function loadWatchStocks() {
-  const box = $("#wsList"); if (!box) return;
-  box.innerHTML = `<div class="card pad muted">불러오는 중…</div>`;
-  let rows;
-  try { rows = (await api("api/watch/stocks")).rows || []; }
-  catch (_) { box.innerHTML = `<div class="blank"><div class="t">불러오지 못했습니다</div><div class="d">잠시 후 다시 시도해 주세요.</div></div>`; return; }
-  WATCH_SET = new Set(rows.map(r => (r.ticker || "").toUpperCase()));
-  if ($("#wsCount")) $("#wsCount").textContent = rows.length ? `${rows.length}종목` : "";
-  if (!rows.length) {
-    box.innerHTML = `<div class="blank"><div class="t">담아 둔 종목이 없습니다</div>
-      <div class="d"><b>종목</b> 화면에서 국내주식·미국주식을 찾아 ☆를 누르면 여기 모입니다.
-        사면 거래내역에 들어가는 것만으로 보유 종목이 됩니다.</div></div>`;
-    return;
-  }
-  box.innerHTML = `<div class="sym-list">` + rows.map(r => {
-    const ccy = r.currency || "KRW";
-    const chg = r.change_pct == null ? "" :
-      `<span class="num ${r.change_pct >= 0 ? "gain" : "loss"}">${r.change_pct >= 0 ? "+" : ""}${r.change_pct.toFixed(2)}%</span>`;
-    const tgt = r.target_krw
-      ? `목표 ${money(r.target_krw, ccy)}` + (r.to_target_pct == null ? "" :
-          ` <span class="num ${r.to_target_pct <= 0 ? "gain" : "muted"}">(${r.to_target_pct > 0 ? "+" : ""}${r.to_target_pct.toFixed(1)}%)</span>`)
-      : `<span class="muted">목표가 없음</span>`;
-    return `<div class="sym-item">
-      <div class="sym-head">
-        <div class="sym-main">
-          <div class="sym-title mkt-open" data-ticker="${esc(r.ticker)}" data-name="${esc(r.name)}" data-market="${esc(r.market || "")}">${esc(r.name)}</div>
-          <div class="sym-alt">${esc(r.ticker)}${r.market ? " · " + esc(r.market) : ""} · ${tgt}</div>
-        </div>
-        <div class="ws-px">
-          <div class="num">${r.price ? money(r.price, ccy) : `<span class="muted">시세 없음</span>`}</div>
-          <div class="sym-alt">${chg}</div>
-        </div>
-        <input class="wsTarget" type="number" step="any" placeholder="목표가" value="${r.target_krw ?? ""}"
-               data-id="${r.id}" aria-label="목표가" title="목표가를 넣고 엔터">
-        <button class="mini del wsDel" data-id="${r.id}" data-name="${esc(r.name)}">빼기</button>
-      </div>
-    </div>`;
-  }).join("") + `</div>`;
-  box.querySelectorAll(".mkt-open").forEach(el => el.addEventListener("click", () =>
-    openStockModal(el.dataset.name, el.dataset.ticker, el.dataset.market)));
-  box.querySelectorAll(".wsDel").forEach(b => b.addEventListener("click", async () => {
-    if (!confirm(`'${b.dataset.name}'을(를) 관심종목에서 뺄까요?`)) return;
-    await api("api/watch/stocks/" + b.dataset.id, { method: "DELETE" });
-    toast("뺐어요"); loadWatchStocks();
-  }));
-  box.querySelectorAll(".wsTarget").forEach(inp => inp.addEventListener("change", async () => {
-    const v = inp.value.trim();
-    await api("api/watch/stocks/" + inp.dataset.id, { method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ticker: "-", name: "-", target_krw: v === "" ? null : +v }) });
-    toast("목표가 저장"); loadWatchStocks();
-  }));
 }
 
 async function symReload() { await loadAliases(); if (PORTFOLIO) renderHoldSummary(); renderHoldings("#investHoldings"); if (mState.loaded) loadMovements(); }
