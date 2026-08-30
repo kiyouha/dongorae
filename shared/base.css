@@ -1331,7 +1331,9 @@ button:focus:not(:focus-visible), .tab:focus:not(:focus-visible) { outline: none
 /* 히어로가 이제 절반 폭이다 — 숫자와 차트를 그 폭에 맞춘다. */
 .hero { padding: var(--sp-4) var(--sp-5) var(--sp-3); }
 .hero .figure { font-size: clamp(24px, 3vw, 32px); }
-.chartbox { height: 176px; }
+.chartbox { height: 176px; position: relative; }
+#navCanvas { height: 100%; }               /* 라이브러리 차트가 상자를 꽉 채운다 */
+.lc-sm { height: 170px; }                  /* 배당·이자 월별 */
 
 /* ── 차트·배분 ────────────────────────────────────────────────────────
    숫자 옆 색은 항목을 가리키는 표시일 뿐이다. 이름 칩까지 색을 입히면

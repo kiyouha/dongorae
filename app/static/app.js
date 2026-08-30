@@ -512,7 +512,7 @@ function rgba(hex, a) {
    추이는 이제 '스냅샷 찍힌 날'이 아니라 **월말 기준 월별**이다. 스냅샷은 일별로도
    쌓이는데 그걸 그대로 그리면 찍힌 날만 촘촘하고 나머지는 비어 축이 거짓말을 한다.
    서버(api/nav-monthly)가 각 달의 마지막 날만 골라 주고, 소유자도 거기서 합산한다. */
-let NAV_ROWS = [], navRange = "ALL", NAV_RESIZE_BOUND = false;
+let NAV_ROWS = [], navRange = "ALL";   // 리사이즈는 lcCreate의 ResizeObserver가 맡는다
 function renderHero() {
   const pills = [["3Y", "3년"], ["5Y", "5년"], ["ALL", "전체"]];
   $("#hero").innerHTML = `<div class="hero-top">
@@ -523,16 +523,12 @@ function renderHero() {
     </div>
     <div class="ranges" id="navRanges">${pills.map(([r, l]) => `<button data-r="${r}"${r === navRange ? ' class="on"' : ""}>${l}</button>`).join("")}</div>
   </div>
-  <div class="chartbox"><canvas id="navCanvas"></canvas><div class="navtip" id="navTip"></div></div>`;
+  <div class="chartbox"><div id="navCanvas"></div><div class="navtip" id="navTip"></div></div>`;
   $("#navRanges").addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return; navRange = b.dataset.r;
     [...e.currentTarget.children].forEach(x => x.classList.toggle("on", x === b));
     drawNav();
   });
-  const cv = $("#navCanvas");
-  cv.addEventListener("mousemove", navHover);
-  cv.addEventListener("mouseleave", () => { const tp = $("#navTip"); if (tp) tp.style.opacity = 0; drawNav(); });
-  if (!NAV_RESIZE_BOUND) { NAV_RESIZE_BOUND = true; window.addEventListener("resize", () => { if ($("#navCanvas")) drawNav(); }); }
   loadNav();
 }
 async function loadNav() {
@@ -556,14 +552,14 @@ function niceStep(range, target) {
 }
 const navLabel = m => (m || "").slice(0, 7);
 
-function drawNav(hoverIdx) {
-  const cv = $("#navCanvas"), chg = $("#heroChg"), fig = document.querySelector("#hero .figure");
-  if (!cv) return;
+function drawNav() {
+  const el = $("#navCanvas"), chg = $("#heroChg"), fig = document.querySelector("#hero .figure");
+  if (!el) return;
   const rows = navSlice();
   if (rows.length < 2) {
     if (fig) fig.innerHTML = wonBig(navNetNow());
     if (chg) chg.innerHTML = `<span class="csub">월별 추이가 아직 없어요 — <b>설정 → 데이터 → 자산 추이 채우기</b></span>`;
-    const g0 = cv.getContext("2d"); g0.clearRect(0, 0, cv.width, cv.height); return;
+    el.innerHTML = ""; return;
   }
   const first = rows[0].total_krw, lastV = rows[rows.length - 1].total_krw, diff = lastV - first;
   const pct = first ? diff / first * 100 : 0, up = diff >= 0;
@@ -575,111 +571,47 @@ function drawNav(hoverIdx) {
       <span class="csub">${up ? "+" : ""}${pct.toFixed(1)}% · ${nm} (${navLabel(rows[0].month)} ~ ${navLabel(rows[rows.length - 1].month)})</span>`;
   }
 
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const w = cv.clientWidth, h = cv.clientHeight; cv.width = w * dpr; cv.height = h * dpr;
-  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
-  g.font = '11px "Pretendard Variable", system-ui, sans-serif';
-
-  const vals = rows.map(r => r.total_krw);
-  const vmin = Math.min(...vals), vmax = Math.max(...vals);
-  const step = niceStep((vmax - vmin) || Math.abs(vmax) * 0.1 || 1, 3);   // 눈금은 3~4개면 충분하다
-  const lo = Math.floor(vmin / step) * step - step * 0.3;
-  const hi = Math.ceil(vmax / step) * step + step * 0.3;
-  const ticks = [];
-  for (let t = Math.ceil(lo / step) * step; t <= hi; t += step) ticks.push(t);
-  const labW = Math.max(...ticks.map(t => g.measureText(axEok(t)).width));
-  const pad = { l: labW + 12, r: 12, t: 10, b: 22 };
-  const X = i => pad.l + (w - pad.l - pad.r) * (rows.length < 2 ? 0.5 : i / (rows.length - 1));
-  const Y = v => pad.t + (h - pad.t - pad.b) * (1 - (v - lo) / ((hi - lo) || 1));
-
-  // 가로 눈금 — 아주 흐리게. 격자가 선보다 세면 추이가 안 읽힌다.
-  g.textAlign = "right"; g.textBaseline = "middle";
-  ticks.forEach(t => {
-    const y = Y(t);
-    g.strokeStyle = cvVar("--line"); g.lineWidth = 1;
-    g.beginPath(); g.moveTo(pad.l, y + .5); g.lineTo(w - pad.r, y + .5); g.stroke();
-    g.fillStyle = cvVar("--muted"); g.fillText(axEok(t), pad.l - 8, y);
+  const LC = window.LightweightCharts;
+  const chart = lcCreate(el, { rightPriceScale: { scaleMargins: { top: .12, bottom: .1 } } });
+  if (!chart) { el.innerHTML = `<div class="blank"><div class="t">차트를 불러오지 못했습니다</div><div class="d">새로고침해 보세요.</div></div>`; return; }
+  const t = lcTheme();
+  const col = up ? t.up : t.down;                 // 기간 수익이 +면 빨강, −면 파랑
+  const area = chart.addSeries(LC.AreaSeries, {
+    lineColor: col, topColor: rgba(col, .26), bottomColor: rgba(col, 0), lineWidth: 2,
+    priceFormat: { type: "custom", formatter: v => axEok(v) },
   });
+  const byTime = {};
+  rows.forEach(r => { byTime[r.month + "-01"] = r; });
+  area.setData(rows.map(r => ({ time: r.month + "-01", value: r.total_krw })));
+  chart.timeScale().fitContent();
 
-  /* 여러 해를 한 화면에 그리면 월 라벨은 다 못 쓴다. 해가 바뀌는 자리에만
-     세로 실선을 긋고 연도를 적는다 — 몇 년치를 보고 있는지가 한눈에 들어온다. */
-  const janAt = [];
-  rows.forEach((r, i) => {
-    const mo = (r.month || "").slice(5, 7);
-    if (i === 0 || mo === "01") janAt.push(i);
+  /* 호버 — 그 달의 순자산과 '전월 대비·시작 대비·구성'까지. 이게 이 차트의 값어치라
+     라이브러리로 옮기면서도 그대로 살린다. */
+  const tip = $("#navTip");
+  chart.subscribeCrosshairMove(param => {
+    if (!tip) return;
+    const r = param.time && byTime[param.time];
+    if (!r || !param.point) { tip.style.opacity = 0; return; }
+    const idx = rows.indexOf(r), prev = rows[idx - 1], base = rows[0];
+    const mom = prev ? r.total_krw - prev.total_krw : 0;
+    const fromStart = r.total_krw - base.total_krw;
+    const line = (lab, v) => v === 0 ? "" :
+      `<div class="d"><span>${lab}</span> <b class="${v > 0 ? "gain" : "loss"}">${v > 0 ? "+" : ""}${wonC(v)}</b></div>`;
+    tip.style.opacity = 1;
+    tip.style.left = Math.min(Math.max(param.point.x, 60), el.clientWidth - 60) + "px";
+    tip.style.top = Math.max(8, param.point.y - 8) + "px";
+    tip.innerHTML = `<b>${wonC(r.total_krw)}</b> <span class="d">${navLabel(r.month)}</span>`
+      + line("전월", mom) + line("시작 대비", fromStart)
+      + `<div class="d muted">주식 ${wonC(r.market_value_krw)} · 현금 ${wonC(r.cash_krw)}`
+      + (r.realestate_krw ? ` · 실물 ${wonC(r.realestate_krw)}` : "") + `</div>`;
   });
-  g.textAlign = "center"; g.textBaseline = "alphabetic";
-  let lastRight = -1e9;
-  janAt.forEach(i => {
-    const x = X(i), yr = (rows[i].month || "").slice(0, 4);
-    if (i > 0) {
-      g.strokeStyle = cvVar("--line"); g.lineWidth = 1;
-      g.beginPath(); g.moveTo(x + .5, pad.t); g.lineTo(x + .5, h - pad.b); g.stroke();
-    }
-    const tw = g.measureText(yr).width;
-    if (x - tw / 2 >= lastRight + 12) {                 // 겹치면 건너뛴다
-      g.fillStyle = cvVar("--muted");
-      g.fillText(yr, Math.min(Math.max(x, pad.l + tw / 2), w - pad.r - tw / 2), h - 6);
-      lastRight = x + tw / 2;
-    }
-  });
-
-  const P = rows.map((r, i) => ({ x: X(i), y: Y(r.total_krw), v: r.total_krw, l: r.month, r }));
-  const acc = cvVar("--accent");
-
-  // 선 아래 옅은 면 — 오르내림의 방향이 먼저 읽히게
-  const grad = g.createLinearGradient(0, pad.t, 0, h - pad.b);
-  grad.addColorStop(0, rgba(acc, .20)); grad.addColorStop(1, rgba(acc, 0));
-  g.beginPath(); g.moveTo(P[0].x, h - pad.b);
-  P.forEach(p => g.lineTo(p.x, p.y));
-  g.lineTo(P[P.length - 1].x, h - pad.b); g.closePath();
-  g.fillStyle = grad; g.fill();
-
-  // 시작점 기준선 — 지금이 출발점보다 위인지 아래인지가 바로 보인다
-  g.save(); g.setLineDash([2, 4]); g.strokeStyle = rgba(cvVar("--muted"), .5); g.lineWidth = 1;
-  g.beginPath(); g.moveTo(pad.l, Y(first) + .5); g.lineTo(w - pad.r, Y(first) + .5); g.stroke(); g.restore();
-
-  g.beginPath(); P.forEach((p, i) => i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y));
-  g.strokeStyle = acc; g.lineWidth = 2; g.lineJoin = "round"; g.lineCap = "round"; g.stroke();
-
-  if (hoverIdx != null && P[hoverIdx]) {
-    const p = P[hoverIdx];
-    g.strokeStyle = cvVar("--line-strong"); g.lineWidth = 1; g.setLineDash([3, 3]);
-    g.beginPath(); g.moveTo(p.x + .5, pad.t); g.lineTo(p.x + .5, h - pad.b); g.stroke();
-    g.setLineDash([]);
-    g.beginPath(); g.arc(p.x, p.y, 4.5, 0, 7);
-    g.fillStyle = cvVar("--surface"); g.fill();
-    g.lineWidth = 2; g.strokeStyle = acc; g.stroke();
-  }
-  const e = P[P.length - 1];
-  g.beginPath(); g.arc(e.x, e.y, 4, 0, 7); g.fillStyle = acc; g.fill();
-  g.lineWidth = 2; g.strokeStyle = cvVar("--surface"); g.stroke();
-  cv._pts = P;
 }
 /* 추이가 아직 없을 때 히어로에 띄울 현재 순자산(금융 + 실물) */
 function navNetNow() {
   const t = dashPortfolio().total;
   return (t.total_krw || 0) + (DASH_SEL.length ? 0 : (OWNED_TOTAL || 0));
 }
-function navHover(ev) {
-  const cv = $("#navCanvas"), tip = $("#navTip"); if (!cv || !cv._pts || !cv._pts.length) return;
-  const r = cv.getBoundingClientRect(), mx = ev.clientX - r.left;
-  let bi = 0, bd = 1e9;
-  cv._pts.forEach((p, i) => { const d = Math.abs(p.x - mx); if (d < bd) { bd = d; bi = i; } });
-  const best = cv._pts[bi], prev = cv._pts[bi - 1], base = cv._pts[0];
-  drawNav(bi);
-  const mom = prev ? best.v - prev.v : 0;
-  const fromStart = best.v - base.v;
-  const line = (lab, v) => v === 0 ? "" :
-    `<div class="d"><span>${lab}</span> <b class="${v > 0 ? "gain" : "loss"}">${v > 0 ? "+" : ""}${wonC(v)}</b></div>`;
-  tip.style.opacity = 1;
-  tip.style.left = Math.min(Math.max(best.x, 60), cv.clientWidth - 60) + "px";
-  tip.style.top = (best.y - 8) + "px";
-  tip.innerHTML = `<b>${wonC(best.v)}</b> <span class="d">${navLabel(best.l)}</span>`
-    + line("전월", mom) + line("시작 대비", fromStart)
-    + `<div class="d muted">주식 ${wonC(best.r.market_value_krw)} · 현금 ${wonC(best.r.cash_krw)}`
-    + (best.r.realestate_krw ? ` · 실물 ${wonC(best.r.realestate_krw)}` : "") + `</div>`;
-}
+
 
 /* ── 스탯 스트립 ── */
 /* 수익 한 판 — 평가·실현·배당·이자를 나란히 두고 맨 아래에서 합친다.
@@ -1302,7 +1234,7 @@ function lcTheme() {
   return { line: v("--line") || "#232529", strong: v("--line-strong") || "#33353b",
            muted: v("--muted") || "#8a8f98", surface3: v("--surface-3") || "#232428",
            up: v("--c-red") || "#df645f", down: v("--c-blue") || "#6998cc",
-           green: v("--c-green") || "#66bd9d" };
+           green: v("--c-green") || "#66bd9d", coin: v("--c-coin") || "#fbcb45" };
 }
 
 function lcCreate(el, extra) {
@@ -1381,30 +1313,33 @@ async function renderDivChart() {
     if ($("#divSub")) $("#divSub").textContent = "";
     return;
   }
-  const mx = Math.max(...rows.map(r => r.net), 1);
   const tot = rows.reduce((a, r) => a + r.net, 0);
-  const yrs = [...new Set(rows.map(r => r.month.slice(0, 4)))];
   const avg = tot / rows.length;
   const best = rows.reduce((a, r) => r.net > a.net ? r : a, rows[0]);
 
-  const bars = rows.map((r, i) => {
-    const jan = r.month.slice(5, 7) === "01";
-    const hi = r === best;
-    return `<div class="ib ${hi ? "hi" : ""} ${jan && i ? "yr" : ""}" title="${esc(r.month)} · 순 ${won(r.net)}원 (배당 ${won(r.div_net)} · 이자 ${won(r.int_net)})">`
-      + `<i style="height:${Math.max(2, r.net / mx * 100)}%"></i></div>`;
-  }).join("");
-  const yrLabels = yrs.map(y => {
-    const n = rows.filter(r => r.month.slice(0, 4) === y).length;
-    return `<span style="flex:${n} 0 0;min-width:0">${y}</span>`;
-  }).join("");
-
-  el.innerHTML = `<div class="ibars">${bars}</div>
-    <div class="ibars-x">${yrLabels}</div>
-    <div class="ibars-foot">
-      <span>전 기간 합계 <b class="num">${wonC(tot)}</b></span>
-      <span>월평균 <b class="num">${wonC(avg)}</b></span>
-      <span>가장 많았던 달 <b class="num">${esc(best.month)}</b> ${wonC(best.net)}</span>
-    </div>`;
+  el.innerHTML = `<div class="lc-box lc-sm" id="divBox"></div><div class="ibars-foot" id="divFoot"></div>`;
+  const LC = window.LightweightCharts;
+  const chart = lcCreate($("#divBox"), { rightPriceScale: { scaleMargins: { top: .15, bottom: 0 } } });
+  if (!chart) { el.innerHTML = `<div class="blank"><div class="t">차트를 불러오지 못했습니다</div><div class="d">새로고침해 보세요.</div></div>`; return; }
+  const t = lcTheme();
+  const bars = chart.addSeries(LC.HistogramSeries, {
+    priceFormat: { type: "custom", formatter: v => wonC(v) },
+  });
+  const byM = {};
+  rows.forEach(r => { byM[r.month + "-01"] = r; });
+  bars.setData(rows.map(r => ({
+    time: r.month + "-01", value: r.net,
+    color: r === best ? t.coin : rgba(t.green, .75),      // 가장 많이 받은 달만 눈에 띄게
+  })));
+  chart.timeScale().fitContent();
+  const foot = $("#divFoot");
+  chart.subscribeCrosshairMove(param => {
+    const r = param.time && byM[param.time];
+    if (foot) foot.innerHTML = r
+      ? `<b>${navLabel(r.month)}</b> 순 <b class="num">${won(r.net)}</b>원 <span class="muted">(배당 ${won(r.div_net)} · 이자 ${won(r.int_net)})</span>`
+      : `전 기간 <b class="num">${won(tot)}</b>원 · 월평균 <b class="num">${won(Math.round(avg))}</b>원 · 최고 ${navLabel(best.month)} <b class="num">${won(best.net)}</b>원`;
+  });
+  if (foot) foot.innerHTML = `전 기간 <b class="num">${won(tot)}</b>원 · 월평균 <b class="num">${won(Math.round(avg))}</b>원 · 최고 ${navLabel(best.month)} <b class="num">${won(best.net)}</b>원`;
   if ($("#divSub")) $("#divSub").textContent = `${rows[0].month} ~ ${rows[rows.length - 1].month} · ${rows.length}개월`;
 }
 
