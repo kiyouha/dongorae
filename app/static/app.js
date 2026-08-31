@@ -379,6 +379,23 @@ function exportHoldings() {
 }
 const today = () => new Date().toISOString().slice(0, 10);
 
+/* 필터 여닫이 — 화면마다 같은 규격으로 쓴다.
+   폰에서는 접어 두고(필터 넷을 늘어놓으면 정작 목록이 안 보인다), 창이 넓어지면 편다.
+   데스크톱에선 버튼이 CSS로 숨겨지고 .filter-body 가 display:contents 라 한 줄로 펼쳐진다. */
+function bindFilterToggle(btnSel, bodySel) {
+  const btn = $(btnSel), body = $(bodySel);
+  if (!btn || !body) return;
+  const phone = () => window.matchMedia("(max-width: 700px)").matches;
+  if (phone()) body.hidden = true;
+  btn.addEventListener("click", () => {
+    body.hidden = !body.hidden;
+    btn.setAttribute("aria-expanded", String(!body.hidden));
+  });
+  window.addEventListener("resize", () => {
+    if (!phone()) { body.hidden = false; btn.setAttribute("aria-expanded", "true"); }
+  });
+}
+
 function toast(msg) {
   const t = $("#toast"); t.textContent = msg; t.classList.add("show");
   clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2200);
@@ -3819,6 +3836,10 @@ function reQuery() {
   if (f) p.set("date_from", f);
   if (to) p.set("date_to", to);
   if ($("#rType") && $("#rType").value) p.set("deal_type", $("#rType").value);
+  if (window.rFilterCount) {          // 접어 둔 필터에 걸린 개수(검색은 밖에 있으니 빼고)
+    window.rFilterCount([g, amin, amax, f, to, $("#rType") && $("#rType").value]
+      .filter(Boolean).length);
+  }
   p.set("sort", reSort.key); p.set("dir", reSort.dir);
   p.set("limit", LIMIT); p.set("offset", reState.offset);
   return p.toString();
@@ -3918,22 +3939,15 @@ function onSubShow(viewId, sub) {   // 하위탭 최초 표시 시 지연 로드
   }
 }
 function initTabs() {
-  /* 폰에서 거래내역 필터 여닫기. 데스크톱에선 버튼이 안 보이고 필터는 늘 펼쳐져 있다.
+  /* 폰에서 필터 여닫기 — 화면마다 같은 규격으로 쓴다. 데스크톱에선 버튼이 안 보이고 필터는 늘 펼쳐져 있다.
      걸린 필터 개수를 버튼에 적어, 접어 둔 상태에서도 뭐가 걸렸는지 알 수 있게 한다. */
-  {
-    const btn = $("#mFilterBtn"), body = $("#mFilters");
-    const phone = () => window.matchMedia("(max-width: 700px)").matches;
-    const sync = () => { if (phone() && body.hidden === undefined) body.hidden = true; };
-    if (btn && body) {
-      if (phone()) body.hidden = true;
-      btn.addEventListener("click", () => {
-        body.hidden = !body.hidden;
-        btn.setAttribute("aria-expanded", String(!body.hidden));
-      });
-      window.addEventListener("resize", () => { if (!phone()) body.hidden = false; });
-      window.mFilterCount = (n) => { btn.textContent = n ? `필터 ${n}` : "필터"; };
-      sync();
-    }
+  bindFilterToggle("#mFilterBtn", "#mFilters");
+  bindFilterToggle("#rFilterBtn", "#rFilters");
+  {   // 접어 둔 채로도 뭐가 걸렸는지 보이게 버튼에 개수를 적는다
+    const btn = $("#mFilterBtn");
+    if (btn) window.mFilterCount = (n) => { btn.textContent = n ? `필터 ${n}` : "필터"; };
+    const rb = $("#rFilterBtn");
+    if (rb) window.rFilterCount = (n) => { rb.textContent = n ? `필터 ${n}` : "필터"; };
   }
   document.querySelectorAll("[data-view]").forEach(tb => tb.addEventListener("click", () => activateTab(tb.dataset.view)));
   document.querySelectorAll(".subtabs .subtab").forEach(sb => sb.addEventListener("click", () => selectSub(sb.closest(".subtabs"), sb.dataset.sub)));

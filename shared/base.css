@@ -777,6 +777,12 @@ td .sym .tick { font-weight: var(--w-reg); }
 /* 필터 묶음 — 데스크톱에선 없는 셈 치고(자식이 툴바에 그대로 놓인다) 폰에서만 여닫는다. */
 .filter-body { display: contents; }
 .filter-toggle { display: none; }
+/* 짝을 이루는 칸(면적 ≥/≤, 시작일/종료일)은 늘 나란히 — 떨어지면 뭐와 뭐의 짝인지 안 보인다. */
+.pair { display: flex; gap: var(--sp-2); align-items: center; }
+.pair > * { flex: 1; min-width: 0; }
+.toolbar .pair { flex: 0 1 auto; }
+.toolbar .pair input[type="number"] { width: 84px; }
+.toolbar .pair input[type="date"] { width: 136px; }
 .period button { padding: 0 10px; flex: none; }
 
 /* ── 툴바 ── 필터와 동작이 섞인 줄. 오른쪽 끝은 늘 그 화면의 주 동작. */
@@ -1251,6 +1257,8 @@ tbody tr:hover > td { background: var(--surface-2); }
   .filter-body[hidden] { display: none; }
   .filter-body > * { width: 100%; }
   .filter-body .chk { width: auto; align-self: flex-start; }
+  .filter-body .pair { width: 100%; }
+  .filter-body .pair input { width: 100%; }
   .filter-body .ms-btn { max-width: none; width: 100%; }
 
   /* 묶음 컨트롤(기간·세그먼트)은 반 폭으로 눌리면 글자가 깨진다 — 한 줄을 통째로 쓴다 */
