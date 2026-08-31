@@ -774,6 +774,9 @@ td .sym .tick { font-weight: var(--w-reg); }
 .holds-more { text-align: center; padding: 9px 0 2px; }
 
 .period { display: flex; gap: var(--sp-2); align-items: center; }
+/* 필터 묶음 — 데스크톱에선 없는 셈 치고(자식이 툴바에 그대로 놓인다) 폰에서만 여닫는다. */
+.filter-body { display: contents; }
+.filter-toggle { display: none; }
 .period button { padding: 0 10px; flex: none; }
 
 /* ── 툴바 ── 필터와 동작이 섞인 줄. 오른쪽 끝은 늘 그 화면의 주 동작. */
@@ -1222,6 +1225,21 @@ tbody tr:hover > td { background: var(--surface-2); }
   .filters, .toolbar { gap: 6px; }
   .filters > *, .toolbar > * { flex: 1 1 calc(50% - 3px); min-width: 0; }
   .filters .spacer, .toolbar .spacer, .filters .div, .toolbar .div { display: none; }
+  /* 폰: 필터는 접어 둔다. 일곱 줄을 늘어놓으면 정작 거래 목록이 안 보인다.
+     펼치면 한 줄에 하나씩 — 무엇을 고르는 칸인지 값(‘소유자 전체’)이 곧 말해 준다. */
+  .filter-toggle { display: inline-flex; flex: 0 0 auto; }
+  .filter-toggle[aria-expanded="true"] { background: var(--surface-3); color: var(--ink); }
+  .filter-body {
+    display: flex; flex-direction: column; gap: 6px;
+    flex: 1 1 100%; margin-top: 2px;
+    padding: var(--sp-3); border: 1px solid var(--line); border-radius: var(--r-sm);
+    background: var(--surface-2);
+  }
+  .filter-body[hidden] { display: none; }
+  .filter-body > * { width: 100%; }
+  .filter-body .chk { width: auto; align-self: flex-start; }
+  .filter-body .ms-btn { max-width: none; width: 100%; }
+
   /* 묶음 컨트롤(기간·세그먼트)은 반 폭으로 눌리면 글자가 깨진다 — 한 줄을 통째로 쓴다 */
   .toolbar .ranges, .toolbar .seg, .filters .ranges, .filters .seg { flex: 1 1 100%; }
   .toolbar .ranges button, .filters .ranges button { flex: 1; }

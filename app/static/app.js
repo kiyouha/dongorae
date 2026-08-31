@@ -3334,6 +3334,12 @@ function renderMovTable() {
 }
 async function loadMovements(fresh) {   // fresh=거래를 바꾼 뒤 → 현재 잔액 요약도 다시 읽기
   $("#mTable").innerHTML = `<tbody><tr><td class="loading">불러오는 중…</td></tr></tbody>`;
+  if (window.mFilterCount) {          // 접어 둔 필터에 뭐가 걸렸는지 버튼에 적는다
+    const on = ["mOwner", "mAccount", "mBroker"].filter(k => (msSelected(k) || []).length).length
+      + ($("#mKind") && $("#mKind").value ? 1 : 0)
+      + ($("#mSweep") && $("#mSweep").checked ? 1 : 0);
+    window.mFilterCount(on);
+  }
   loadMCash(fresh);
   const d = await api("api/movements?" + mQuery());
   movGroups = d.groups || [];
@@ -3912,6 +3918,23 @@ function onSubShow(viewId, sub) {   // 하위탭 최초 표시 시 지연 로드
   }
 }
 function initTabs() {
+  /* 폰에서 거래내역 필터 여닫기. 데스크톱에선 버튼이 안 보이고 필터는 늘 펼쳐져 있다.
+     걸린 필터 개수를 버튼에 적어, 접어 둔 상태에서도 뭐가 걸렸는지 알 수 있게 한다. */
+  {
+    const btn = $("#mFilterBtn"), body = $("#mFilters");
+    const phone = () => window.matchMedia("(max-width: 700px)").matches;
+    const sync = () => { if (phone() && body.hidden === undefined) body.hidden = true; };
+    if (btn && body) {
+      if (phone()) body.hidden = true;
+      btn.addEventListener("click", () => {
+        body.hidden = !body.hidden;
+        btn.setAttribute("aria-expanded", String(!body.hidden));
+      });
+      window.addEventListener("resize", () => { if (!phone()) body.hidden = false; });
+      window.mFilterCount = (n) => { btn.textContent = n ? `필터 ${n}` : "필터"; };
+      sync();
+    }
+  }
   document.querySelectorAll("[data-view]").forEach(tb => tb.addEventListener("click", () => activateTab(tb.dataset.view)));
   document.querySelectorAll(".subtabs .subtab").forEach(sb => sb.addEventListener("click", () => selectSub(sb.closest(".subtabs"), sb.dataset.sub)));
   /* 폰 '더보기' 시트 — 바깥을 누르거나 Esc로도 닫힌다. */
