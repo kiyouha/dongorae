@@ -898,30 +898,43 @@ button.add-watch:hover { background: var(--accent-soft); border-color: var(--acc
 .ranges button:hover { color: var(--ink-2); }
 .ranges button.on { background: var(--surface-3); color: var(--ink); }
 
-/* ── 입력 ── 색을 명시하지 않으면 브라우저 기본값이 튀어나온다(자동완성 목록 포함). */
+/* ── 입력 ── 네모칸 대신 밑줄 하나로. 한 화면에 입력칸이 열 개씩 놓이는 앱이라
+   테두리를 다 두르면 칸끼리 경쟁해서 지저분해진다. 대신 바닥에 아주 옅은 색을 남겨
+   '여기가 칸이다'는 알 수 있게 하고, 포커스면 밑줄이 강조색으로 두꺼워진다.
+   색을 명시하지 않으면 브라우저 기본값이 튀어나온다(자동완성 목록 포함). */
 input, select, textarea,
 .filters select, .filters input, .re-form input, .re-form select, .ms-btn {
   font: inherit; font-size: var(--fs-sm); color: var(--ink);
-  background: var(--surface-2);
-  height: var(--ctl-h); padding: 0 10px;
-  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
-  transition: border-color .12s var(--ease), box-shadow .12s var(--ease), background .12s var(--ease);
+  background: color-mix(in srgb, var(--surface-2) 55%, transparent);
+  height: var(--ctl-h); padding: 0 8px;
+  border: 0; border-bottom: 1px solid var(--line-strong);
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  transition: border-color .12s var(--ease), background .12s var(--ease);
 }
-.filters select:hover, .filters input:hover, .ms-btn:hover { border-color: #414349; }
+.filters select:hover, .filters input:hover, .ms-btn:hover,
+input:hover, select:hover, textarea:hover {
+  background: var(--surface-2); border-bottom-color: var(--muted);
+}
 input:focus, select:focus, textarea:focus,
-.filters select:focus, .filters input:focus, .re-form input:focus, .re-form select:focus {
-  outline: none; border-color: var(--accent); box-shadow: var(--ring);
+.filters select:focus, .filters input:focus, .re-form input:focus, .re-form select:focus,
+.ms-btn:focus-visible {
+  outline: none; background: var(--surface-2);
+  border-bottom-color: var(--accent); box-shadow: inset 0 -1px 0 0 var(--accent);
 }
 input::placeholder, textarea::placeholder, .filters input::placeholder { color: var(--muted); }
 option { color: var(--ink); background: var(--surface-3); }
 textarea { height: auto; padding: 8px 10px; line-height: 1.5; }
 input[type="checkbox"], input[type="radio"] {
-  height: auto; padding: 0; border: 0; border-radius: 0; accent-color: var(--accent);
+  height: auto; padding: 0; border: 0; border-radius: 0; background: none;
+  accent-color: var(--accent); box-shadow: none;
 }
-input[type="file"] { height: auto; padding: 6px; border-style: dashed; border-color: var(--line-strong); }
+input[type="file"] {
+  height: auto; padding: 8px; background: none;
+  border: 1px dashed var(--line-strong); border-radius: var(--r-sm);
+}
 .ms-btn { padding: 0 26px 0 10px; color: var(--ink-2); font-weight: var(--w-reg); }
-.msx.sel .ms-btn {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--line-strong));
+.msx.sel .ms-btn {                       /* 고른 게 있으면 밑줄과 글자를 강조색으로 */
+  border-bottom-color: var(--accent);
   background: var(--accent-soft); color: var(--accent-ink); font-weight: var(--w-med);
 }
 
