@@ -773,6 +773,9 @@ td .sym .tick { font-weight: var(--w-reg); }
 .owned-sum { border-top: 1px solid var(--line-strong); margin-top: 4px; padding-top: 8px; }
 .holds-more { text-align: center; padding: 9px 0 2px; }
 
+.period { display: flex; gap: var(--sp-2); align-items: center; }
+.period button { padding: 0 10px; flex: none; }
+
 /* ── 툴바 ── 필터와 동작이 섞인 줄. 오른쪽 끝은 늘 그 화면의 주 동작. */
 .filters, .toolbar {
   display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center;
@@ -1214,11 +1217,21 @@ tbody tr:hover > td { background: var(--surface-2); }
   .tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
   thead th, tbody td { padding: 10px 11px; white-space: nowrap; }
 
-  /* 필터 줄은 접히고, 입력칸은 한 줄을 꽉 채운다. */
+  /* 필터 줄은 접힌다. 기본은 2열이고, 성격에 따라 폭을 따로 준다 —
+     전부 같은 flex-basis를 주면 화살표 버튼도 반 폭으로 부풀어 줄이 뒤죽박죽이 된다. */
   .filters, .toolbar { gap: 6px; }
-  .filters > *, .toolbar > * { flex: 1 1 140px; min-width: 0; }
-  .filters .spacer, .toolbar .spacer { display: none; }
-  .filters input[type=search], .toolbar input[type=search] { min-width: 0; flex: 1 1 130px; }
+  .filters > *, .toolbar > * { flex: 1 1 calc(50% - 3px); min-width: 0; }
+  .filters .spacer, .toolbar .spacer, .filters .div, .toolbar .div { display: none; }
+  /* 묶음 컨트롤(기간·세그먼트)은 반 폭으로 눌리면 글자가 깨진다 — 한 줄을 통째로 쓴다 */
+  .toolbar .ranges, .toolbar .seg, .filters .ranges, .filters .seg { flex: 1 1 100%; }
+  .toolbar .ranges button, .filters .ranges button { flex: 1; }
+  /* 기간(◀ 월 ▶)은 한 줄을 통째로 쓰고 화살표는 손가락 크기로 고정 */
+  .toolbar .period { flex: 1 1 100%; }
+  .toolbar .period button { flex: 0 0 40px; padding: 0; }
+  .toolbar .period select { flex: 1; }
+  /* 검색과 요약은 한 줄 전체 */
+  .filters input[type=search], .toolbar input[type=search] { flex: 1 1 100%; }
+  .toolbar .cash-sum { flex: 1 1 100%; text-align: left; }
   .filters .chk, .toolbar .chk { flex: 0 0 auto; }
   .ms-btn { max-width: none; }
 

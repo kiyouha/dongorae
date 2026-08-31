@@ -8,8 +8,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="static/img/icon-192.png?v=1">
   <link rel="apple-touch-icon" sizes="180x180" href="static/img/icon-180.png?v=1">
   <meta name="theme-color" content="#08090a">
-  <link rel="stylesheet" href="static/styles.css?v=20260831b">
-  <link rel="stylesheet" href="/shared/base.css?v=20260831b">
+  <link rel="stylesheet" href="static/styles.css?v=20260831d">
+  <link rel="stylesheet" href="/shared/base.css?v=20260831d">
 </head>
 <body>
   <div class="app">
@@ -123,9 +123,12 @@
             <div id="mAccount"></div>
             <div id="mBroker"></div>
             <select id="mKind"><option value="">유형 전체</option></select>
-            <button id="mPrev" class="pill-reset" title="이전 달" style="padding:0 10px">◀</button>
-            <select id="mMonth" title="연월 선택"></select>
-            <button id="mNext" class="pill-reset" title="다음 달" style="padding:0 10px">▶</button>
+            <!-- 기간 조작은 한 덩이다. 따로 두면 폰에서 화살표가 반 폭으로 부풀어 줄이 무너진다. -->
+            <div class="period">
+              <button id="mPrev" class="pill-reset" title="이전 달">◀</button>
+              <select id="mMonth" title="연월 선택"></select>
+              <button id="mNext" class="pill-reset" title="다음 달">▶</button>
+            </div>
             <input type="search" id="mSearch" placeholder="상품 검색">
             <label class="chk" title="CMA·RP 예금성 이동(예치/인출) 보기"><input type="checkbox" id="mSweep"> 예치·인출</label>
             <button class="pill-reset" id="mReset">초기화</button>
@@ -769,6 +772,6 @@
   <!-- 주식 차트 — TradingView Lightweight Charts (Apache-2.0). CDN이 아니라 로컬에 둔다:
        집 서버라 바깥이 끊겨도 화면은 떠야 하고, 버전이 말없이 바뀌면 안 된다. -->
   <script src="static/vendor/lightweight-charts.standalone.production.js?v=5.0.9"></script>
-  <script src="static/app.js?v=20260831b"></script>
+  <script src="static/app.js?v=20260831d"></script>
 </body>
 </html>
