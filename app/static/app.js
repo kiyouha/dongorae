@@ -1777,9 +1777,9 @@ function ownedSub(it) {
   if (it.kind === "자가")
     return m(`시세 ${won(it.value_krw)}`) + tied
       + (it.loan_krw ? m(`− 대출 ${won(it.loan_krw)}`) : "");
-  if (it.kind === "전세") return m("전세보증금") + tied;
-  if (it.kind === "월세") return m(`보증금${it.monthly_krw ? ` · 월 ${won(it.monthly_krw)}` : ""}`) + tied;
-  if (it.kind === "임대") return m("임대보증금(부채)");
+  if (it.kind === "전세") return m("전세보증금 · 내가 삶") + tied;
+  if (it.kind === "월세") return m(`보증금 · 내가 삶${it.monthly_krw ? ` · 월 ${won(it.monthly_krw)}` : ""}`) + tied;
+  if (it.kind === "임대") return m(`받은 보증금 · 내가 놓음${it.monthly_krw ? ` · 월세 ${won(it.monthly_krw)} 받음` : ""}`);
   if (it.kind === "대출")
     return m(`대출 잔액${it.monthly_krw ? ` · 월 상환 ${won(it.monthly_krw)}` : ""}`)
       + (it.link_owned_id ? m("담보 연결됨") : "");

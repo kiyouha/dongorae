@@ -8,8 +8,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="static/img/icon-192.png?v=1">
   <link rel="apple-touch-icon" sizes="180x180" href="static/img/icon-180.png?v=1">
   <meta name="theme-color" content="#08090a">
-  <link rel="stylesheet" href="static/styles.css?v=20260831g">
-  <link rel="stylesheet" href="/shared/base.css?v=20260831g">
+  <link rel="stylesheet" href="static/styles.css?v=20260901a">
+  <link rel="stylesheet" href="/shared/base.css?v=20260901a">
 </head>
 <body>
   <div class="app">
@@ -456,7 +456,8 @@
         <section>
           <div class="page-hd">
             <h2>부동산 · 실물자산</h2>
-            <span class="sub">취득~매도 기간에만 순자산에 잡힙니다</span>
+            <span class="sub">취득~매도 기간에만 순자산에 잡힙니다 ·
+              <b>전월세를 놓은 집</b>은 받은 보증금이 돌려줄 돈이라 아래 <b>부채</b>에서 등록합니다</span>
           </div>
           <div class="card pad">
             <!-- 라벨·표시 여부는 종류(매매/전세/월세)에 따라 ownedKindFields()가 갈아끼운다.
@@ -466,8 +467,10 @@
               <div class="field">
                 <label for="oKind">종류</label>
                 <select id="oKind">
-                  <option value="자가">매매 (자가)</option><option value="전세">전세</option>
-                  <option value="월세">월세</option><option value="기타자산">기타자산</option>
+                  <option value="자가">매매 (자가)</option>
+                  <option value="전세">전세 — 내가 삶</option>
+                  <option value="월세">월세 — 내가 삶</option>
+                  <option value="기타자산">기타자산</option>
                 </select>
               </div>
               <div class="field wide" id="fld-oName">
@@ -547,15 +550,16 @@
 
         <section>
           <div class="page-hd">
-            <h2>부채</h2>
-            <span class="sub">부동산·계좌에 연결해 두면 어디에 걸린 빚인지 남습니다</span>
+            <h2>부채 · 받은 보증금</h2>
+            <span class="sub">대출과 <b>전월세로 받은 보증금</b>. 부동산·계좌에 연결해 두면 어디에 걸린 것인지 남습니다</span>
           </div>
           <div class="card pad">
             <div class="form-grid">
               <div class="field">
                 <label for="dKind">종류</label>
                 <select id="dKind">
-                  <option value="대출">대출</option><option value="임대">임대(받은 보증금)</option>
+                  <option value="대출">대출</option>
+                  <option value="임대">전월세 — 내가 놓음 (보증금 받음)</option>
                   <option value="기타부채">기타부채</option>
                 </select>
               </div>
@@ -785,6 +789,6 @@
   <!-- 주식 차트 — TradingView Lightweight Charts (Apache-2.0). CDN이 아니라 로컬에 둔다:
        집 서버라 바깥이 끊겨도 화면은 떠야 하고, 버전이 말없이 바뀌면 안 된다. -->
   <script src="static/vendor/lightweight-charts.standalone.production.js?v=5.0.9"></script>
-  <script src="static/app.js?v=20260831g"></script>
+  <script src="static/app.js?v=20260901a"></script>
 </body>
 </html>
