@@ -1592,6 +1592,142 @@ async function renderDivSummary() {
   </div>`;
 }
 
+/* ---------------- 분석 > 배당 ----------------
+   대시보드의 '배당·이자'는 최근 흐름을 보는 자리고, 여기는 연도로 끊어 보는 자리다.
+   연도를 고르면 월별 막대·종목별 표가 그 해 기준으로 다시 그려진다(연도별 표는 늘 전 기간). */
+let DV_YEAR = "", DV_READY = false;
+
+async function loadDividendTab() {
+  const sel = $("#dvYear"); if (!sel) return;
+  let d;
+  try { d = await api("api/dividends-summary" + (DV_YEAR ? "?year=" + DV_YEAR : "")); }
+  catch (_) {
+    $("#dvYearTable").innerHTML = `<div class="blank"><div class="t">불러오지 못했습니다</div><div class="d">잠시 후 다시 시도해 주세요.</div></div>`;
+    return;
+  }
+  const years = (d.by_year || []).map(r => r.yr).filter(Boolean);
+  if (!DV_READY) {                       // 연도 목록은 한 번만 채운다(고른 값이 날아가지 않게)
+    DV_READY = true;
+    sel.innerHTML = `<option value="">전체 기간</option>`
+      + years.slice().reverse().map(y => `<option value="${y}">${y}년</option>`).join("");
+    sel.addEventListener("change", () => { DV_YEAR = sel.value; loadDividendTab(); });
+  }
+  if (!years.length) {
+    $("#dvKpis").innerHTML = "";
+    $("#dvYearTable").innerHTML = `<div class="blank"><div class="t">배당 내역이 없습니다</div>
+      <div class="d">거래내역에 배당이 들어오면 여기에 연도별로 쌓입니다.</div></div>`;
+    ["dvStocks", "dvUpcoming"].forEach(id => { const e = $("#" + id); if (e) e.innerHTML = ""; });
+    return;
+  }
+
+  const scope = DV_YEAR ? (d.by_year || []).filter(r => r.yr === DV_YEAR) : (d.by_year || []);
+  const sum = k => scope.reduce((a, r) => a + (r[k] || 0), 0);
+  const g = sum("gross"), tx = sum("tax"), net = sum("net"), cnt = sum("n");
+  $("#dvKpis").innerHTML =
+    kpiBox(DV_YEAR ? `${DV_YEAR}년 배당` : "전 기간 배당", won(Math.round(g)))
+    + kpiBox("세금", tx ? "-" + won(Math.round(tx)) : "·", tx ? "loss" : "")
+    + kpiBox("순수령", won(Math.round(net)), "gain")
+    + kpiBox("받은 횟수", `${cnt.toLocaleString()}회`);
+
+  renderDvChart(d.by_month || []);
+  renderDvYearTable(d.by_year || []);
+  renderDvStocks(d.by_stock || []);
+  loadDvUpcoming();
+}
+
+function renderDvChart(rows) {
+  const el = $("#dvChart"); if (!el) return;
+  const foot = $("#dvFoot");
+  if (!rows.length) { el.innerHTML = ""; if (foot) foot.textContent = ""; return; }
+  const LC = window.LightweightCharts;
+  const chart = lcCreate(el, { rightPriceScale: { scaleMargins: { top: .15, bottom: 0 } } });
+  if (!chart) { el.innerHTML = `<div class="blank"><div class="t">차트를 불러오지 못했습니다</div><div class="d">새로고침해 보세요.</div></div>`; return; }
+  const t = lcTheme();
+  const best = rows.reduce((a, r) => r.net > a.net ? r : a, rows[0]);
+  const bars = chart.addSeries(LC.HistogramSeries, { priceFormat: { type: "custom", formatter: v => wonC(v) } });
+  const byM = {};
+  rows.forEach(r => { byM[r.ym + "-01"] = r; });
+  bars.setData(rows.map(r => ({ time: r.ym + "-01", value: r.net,
+    color: r === best ? t.coin : rgba(t.green, .75) })));
+  chart.timeScale().fitContent();
+  const base = `${rows.length}개월 · 가장 많았던 달 ${best.ym} <b class="num">${won(best.net)}</b>원`;
+  if (foot) foot.innerHTML = base;
+  chart.subscribeCrosshairMove(param => {
+    const r = param.time && byM[param.time];
+    if (foot) foot.innerHTML = r
+      ? `<b>${r.ym}</b> 순 <b class="num">${won(r.net)}</b>원 <span class="muted">(세전 ${won(Math.round(r.gross))} · 세금 ${won(Math.round(r.tax))} · ${r.n}회)</span>`
+      : base;
+  });
+}
+
+function renderDvYearTable(byYear) {
+  const box = $("#dvYearTable"); if (!box) return;
+  const rows = byYear.slice().reverse();
+  const prev = {};
+  byYear.forEach((r, i) => { if (i) prev[r.yr] = byYear[i - 1].net; });
+  box.innerHTML = `<div class="card tablewrap"><table class="compact">
+    <thead><tr><th>연도</th><th class="r">세전</th><th class="r">세금</th><th class="r">순수령</th>
+      <th class="r">전년 대비</th><th class="r">횟수</th></tr></thead>
+    <tbody>${rows.map(r => {
+      const p = prev[r.yr], diff = p == null ? null : r.net - p;
+      const pct = (p ? diff / p * 100 : null);
+      const cls = DV_YEAR === r.yr ? ' class="row-on"' : "";
+      return `<tr${cls}><td><a class="stock-link dvPick" data-y="${r.yr}">${r.yr}</a></td>
+        <td class="r num">${won(Math.round(r.gross))}</td>
+        <td class="r num loss">${r.tax ? "-" + won(Math.round(r.tax)) : "·"}</td>
+        <td class="r num gain"><b>${won(r.net)}</b></td>
+        <td class="r num ${diff == null ? "muted" : diff >= 0 ? "gain" : "loss"}">${
+          diff == null ? "·" : (diff >= 0 ? "+" : "") + wonC(diff) + (pct == null ? "" : ` (${pct >= 0 ? "+" : ""}${pct.toFixed(0)}%)`)}</td>
+        <td class="r num muted">${r.n}</td></tr>`;
+    }).join("")}</tbody></table></div>`;
+  box.querySelectorAll(".dvPick").forEach(a => a.addEventListener("click", () => {
+    DV_YEAR = DV_YEAR === a.dataset.y ? "" : a.dataset.y;
+    const sel = $("#dvYear"); if (sel) sel.value = DV_YEAR;
+    loadDividendTab();
+  }));
+}
+
+function renderDvStocks(byStock) {
+  const box = $("#dvStocks"); if (!box) return;
+  const sub = $("#dvStockSub");
+  if (sub) sub.textContent = DV_YEAR ? `${DV_YEAR}년` : "전 기간";
+  const rows = byStock.filter(x => x.net);
+  if (!rows.length) { box.innerHTML = `<div class="blank"><div class="t">해당 기간 배당이 없습니다</div><div class="d">연도를 바꿔 보세요.</div></div>`; return; }
+  const tot = rows.reduce((a, r) => a + r.net, 0) || 1;
+  box.innerHTML = `<div class="card tablewrap"><table class="compact">
+    <thead><tr><th>종목</th><th class="r">횟수</th><th class="r">순배당</th><th class="r">비중</th></tr></thead>
+    <tbody>${rows.map(r => `<tr>
+      <td class="sym"><a class="stock-link" data-stock="${esc(r.nm || "")}">${esc(dispName(r.nm) || r.nm)}</a></td>
+      <td class="r num muted">${r.n}</td>
+      <td class="r num gain">${won(r.net)}</td>
+      <td class="r num muted">${(r.net / tot * 100).toFixed(1)}%</td></tr>`).join("")}</tbody></table></div>`;
+  box.querySelectorAll(".stock-link").forEach(a => a.addEventListener("click", () => openStockModal(a.dataset.stock)));
+}
+
+async function loadDvUpcoming() {
+  const box = $("#dvUpcoming"); if (!box) return;
+  let rows;
+  try { rows = (await api("api/dividends-upcoming")).rows || []; } catch (_) { box.innerHTML = ""; return; }
+  if (!rows.length) {
+    box.innerHTML = `<div class="blank"><div class="t">예정된 배당락일이 없습니다</div>
+      <div class="d">보유 종목의 배당 정보는 매일 아침 갱신됩니다. 티커가 안 붙은 종목은 나오지 않습니다.</div></div>`;
+    return;
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  box.innerHTML = `<div class="card tablewrap"><table class="compact">
+    <thead><tr><th>배당락일</th><th>종목</th><th class="r">주당</th><th class="r">예상</th></tr></thead>
+    <tbody>${rows.map(r => {
+      const days = Math.round((new Date(r.ex_dividend) - new Date(today)) / 86400000);
+      return `<tr>
+        <td class="num">${esc(r.ex_dividend)} <span class="muted">${days === 0 ? "오늘" : `D-${days}`}</span></td>
+        <td class="sym"><a class="stock-link" data-stock="${esc(r.name || "")}">${esc(r.name || r.ticker)}</a></td>
+        <td class="r num muted">${r.rate ? money(r.rate, r.currency) : "·"}</td>
+        <td class="r num">${r.est_krw ? won(r.est_krw) : "·"}</td></tr>`;
+    }).join("")}</tbody></table>
+    <p class="hint-line muted">주당 배당 × 보유수량으로 어림한 값입니다. 분기·연 지급 구분이 없어 참고용입니다.</p></div>`;
+  box.querySelectorAll(".stock-link").forEach(a => a.addEventListener("click", () => openStockModal(a.dataset.stock)));
+}
+
 /* ---------------- 투자 > 분석 (수익·추이·비중 — 대시보드 함수 재사용) ---------------- */
 function renderAnalysis() {
   if (!PORTFOLIO) return;
@@ -3930,6 +4066,7 @@ function onSubShow(viewId, sub) {   // 하위탭 최초 표시 시 지연 로드
   const key = viewId + ":" + sub;
   if (viewId === "view-analysis") {
     if (sub === "market") renderAnalysis();
+    else if (sub === "dividend") loadDividendTab();
     else if (sub === "overseas") loadTax();
   } else if (viewId === "view-admin") {
     if (sub === "acctmgr") { renderAccounts(); loadAcctMgr(); loadOwnedMgr(); ownedSideFields(); debtKindFields(); }

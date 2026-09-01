@@ -2258,23 +2258,70 @@ def api_dividends_monthly():
 
 
 @app.get("/api/dividends-summary")
-def api_dividends_summary():
-    """배당 요약(원화환산): 연도별 총액·세금·순액, 종목별 순액. 세금=원천징수(transactions.tax)."""
+def api_dividends_summary(year: str = ""):
+    """배당 요약(원화환산). 연도별은 늘 전 기간, 종목별·월별은 year를 주면 그 해만.
+    세금=원천징수(transactions.tax). 환율은 현재 환율(기존 집계와 같은 기준)."""
     fxj = ("LEFT JOIN prices p ON t.currency <> 'KRW' AND p.price_key = 'FX:' || t.currency || 'KRW'")
     gross = "sum(t.amount * COALESCE(p.price, 1))"
     tax = "sum(COALESCE(t.tax,0) * COALESCE(p.price, 1))"
+    yr = (year or "").strip()[:4]
+    ywhere, yparams = ("", [])
+    if yr.isdigit():
+        ywhere, yparams = (" AND substring(t.trade_date,1,4) = %s", [yr])
     with _conn() as conn:
         by_year = conn.execute(
-            f"""SELECT substring(t.trade_date,1,4) yr, {gross} gross, {tax} tax
+            f"""SELECT substring(t.trade_date,1,4) yr, {gross} gross, {tax} tax, count(*) n
                 FROM transactions t {fxj} WHERE t.type='DIVIDEND'
                 GROUP BY yr ORDER BY yr""").fetchall()
         by_stock = conn.execute(
             f"""SELECT COALESCE(NULLIF(t.name,''), t.symbol) nm, {gross} gross, {tax} tax, count(*) n
-                FROM transactions t {fxj} WHERE t.type='DIVIDEND'
-                GROUP BY nm ORDER BY gross DESC""").fetchall()
-    fmt = lambda rs, key: [{**{k: r[k] for k in r.keys()},
-                            "net": round((r["gross"] or 0) - (r["tax"] or 0))} for r in rs]
-    return {"by_year": fmt(by_year, "yr"), "by_stock": fmt(by_stock, "nm")}
+                FROM transactions t {fxj} WHERE t.type='DIVIDEND'{ywhere}
+                GROUP BY nm ORDER BY gross DESC""", yparams).fetchall()
+        by_month = conn.execute(
+            f"""SELECT substring(t.trade_date,1,7) ym, {gross} gross, {tax} tax, count(*) n
+                FROM transactions t {fxj} WHERE t.type='DIVIDEND'{ywhere}
+                GROUP BY ym ORDER BY ym""", yparams).fetchall()
+    fmt = lambda rs: [{**{k: r[k] for k in r.keys()},
+                       "net": round((r["gross"] or 0) - (r["tax"] or 0))} for r in rs]
+    return {"year": yr if yr.isdigit() else "", "by_year": fmt(by_year),
+            "by_stock": fmt(by_stock), "by_month": fmt(by_month)}
+
+
+@app.get("/api/dividends-upcoming")
+def api_dividends_upcoming():
+    """다가오는 배당락일 — 지금 보유 중인 종목만. symbol_meta(야후)에서 읽고
+    보유수량 × 주당 배당으로 대략의 금액을 같이 낸다(참고값: 분기·연 지급 구분이 없다)."""
+    from datetime import date
+    today = date.today().isoformat()
+    with _conn() as conn:
+        held = {}
+        for b in movements.pnl_by_symbol(conn, None):
+            tk = (b.get("ticker") or "").strip().upper()
+            if tk and b["qty"] > 1e-9:
+                held[tk] = b
+        if not held:
+            return {"rows": []}
+        rows = conn.execute(
+            """SELECT ticker, name, ex_dividend, dividend_rate, dividend_yield, currency
+               FROM symbol_meta
+               WHERE ticker = ANY(%s) AND ex_dividend IS NOT NULL AND ex_dividend >= %s
+               ORDER BY ex_dividend""", (list(held), today)).fetchall()
+        fx = {}
+        from .prices import base as prices
+        out = []
+        for r in rows:
+            b = held[r["ticker"]]
+            ccy = (r["currency"] or b["ccy"] or "KRW").upper()
+            if ccy not in fx:
+                fx[ccy] = prices.get_fx(conn, ccy) or 1.0
+            rate = r["dividend_rate"] or 0
+            out.append({
+                "ticker": r["ticker"], "name": b["name"] or r["name"],
+                "ex_dividend": r["ex_dividend"], "qty": b["qty"],
+                "rate": rate, "yield": r["dividend_yield"], "currency": ccy,
+                "est_krw": round(rate * b["qty"] * fx[ccy]) if rate else None,
+            })
+    return {"rows": out}
 
 
 @app.get("/api/macro")

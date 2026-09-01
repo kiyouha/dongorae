@@ -8,8 +8,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="static/img/icon-192.png?v=1">
   <link rel="apple-touch-icon" sizes="180x180" href="static/img/icon-180.png?v=1">
   <meta name="theme-color" content="#08090a">
-  <link rel="stylesheet" href="static/styles.css?v=20260901a">
-  <link rel="stylesheet" href="/shared/base.css?v=20260901a">
+  <link rel="stylesheet" href="static/styles.css?v=20260901b">
+  <link rel="stylesheet" href="/shared/base.css?v=20260901b">
 </head>
 <body>
   <div class="app">
@@ -325,6 +325,7 @@
     <section class="view" id="view-analysis">
       <div class="tabs subtabs">
         <button class="tab active subtab" data-sub="market">시장·경제</button>
+        <button class="tab subtab" data-sub="dividend">배당</button>
         <button class="tab subtab" data-sub="overseas">해외주식 양도세</button>
       </div>
       <div class="subpanel" data-sub="market">
@@ -342,6 +343,40 @@
           </section>
         </div>
       </div>
+      <div class="subpanel" data-sub="dividend" style="display:none">
+      <div class="page">
+        <section>
+          <div class="page-hd">
+            <h2>배당</h2>
+            <span class="sub">원화환산 · 세금은 원천징수 기준</span>
+            <span class="acts">
+              <select id="dvYear" title="연도"><option value="">전체 기간</option></select>
+            </span>
+          </div>
+          <div id="dvKpis" class="stats"></div>
+          <div class="card pad"><div class="lc-box lc-sm" id="dvChart"></div>
+            <div class="ibars-foot" id="dvFoot"></div></div>
+        </section>
+
+        <section>
+          <div class="page-hd"><h2>연도별</h2></div>
+          <div id="dvYearTable"></div>
+        </section>
+
+        <div class="grid grid-side">
+          <section>
+            <div class="page-hd"><h2>종목별</h2><span class="sub" id="dvStockSub"></span></div>
+            <div id="dvStocks"></div>
+          </section>
+          <section>
+            <div class="page-hd"><h2>다가오는 배당락일</h2>
+              <span class="sub">보유 종목 · 야후 기준</span></div>
+            <div id="dvUpcoming"></div>
+          </section>
+        </div>
+      </div>
+      </div>
+
       <div class="subpanel" data-sub="overseas" style="display:none">
         <div class="page">
           <section>
@@ -789,6 +824,6 @@
   <!-- 주식 차트 — TradingView Lightweight Charts (Apache-2.0). CDN이 아니라 로컬에 둔다:
        집 서버라 바깥이 끊겨도 화면은 떠야 하고, 버전이 말없이 바뀌면 안 된다. -->
   <script src="static/vendor/lightweight-charts.standalone.production.js?v=5.0.9"></script>
-  <script src="static/app.js?v=20260901a"></script>
+  <script src="static/app.js?v=20260901b"></script>
 </body>
 </html>
