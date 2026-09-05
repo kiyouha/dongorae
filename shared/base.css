@@ -263,6 +263,7 @@ td.acts .mini { padding: 2px 7px; }
 
 /* 헤더 브랜드 아이콘 */
 .brand-icon { width: 22px; height: 22px; vertical-align: -4px; }
+.theme-btn { width: 30px; padding: 0; flex: none; font-size: 13px; line-height: 1; }
 
 /* ═══════════════════════════════════════════════════════════════════════
    goraes 공통 디자인 — 돈고래 · 문서고래
@@ -293,6 +294,8 @@ td.acts .mini { padding: 2px 7px; }
   /* 선 — 보일 듯 말 듯. 이 화면에서 층은 선이 아니라 밝기로 읽힌다. */
   --line:        #232529;
   --line-strong: #33353b;
+  --line-hover:  #414349;   /* 올렸을 때 테두리 */
+  --scrim:       rgb(0 0 0 / .62);   /* 모달 뒤 가림막 */
 
   /* ── 색은 이 여섯 개가 전부다 ────────────────────────────────
      녹색 #66bd9d · 연녹색 #abe2bc · 코인 #fbcb45 · 파랑 #6998cc · 빨강 #df645f · 주황 #c69972
@@ -345,6 +348,57 @@ td.acts .mini { padding: 2px 7px; }
   --hero-glow: none;                                        /* 글로우는 뺀다. 조용한 화면에 겉돈다. */
 }
 
+/* ── 화이트 테마 ────────────────────────────────────────────────────
+   면·글자·선만 뒤집는다. 6색은 색상(hue)을 그대로 두고 어둡게만 낮췄다 —
+   원래 값은 어두운 바탕 기준이라 흰 바탕에서는 대비가 1.5~3.4:1 밖에 안 나온다.
+   여기 값은 전부 흰 바탕 대비 4.6:1 이상이다.
+   기본은 시스템을 따르고, 사용자가 고르면 data-theme 이 이긴다. */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --plane:     #f5f6f8;
+  --surface:   #ffffff;
+  --surface-2: #f0f2f5;
+  --surface-3: #e4e8ed;
+
+  --ink:   #16181b;
+  --ink-2: #3f454d;
+  --muted: #6b727c;
+
+  --line:        #e5e8ec;
+  --line-strong: #d3d8de;
+  --line-hover:  #b9c0c8;
+  --scrim:       rgb(16 18 21 / .38);
+
+  --c-green:      #368266;
+  --c-green-soft: #2b8446;
+  --c-coin:       #956e00;
+  --c-blue:       #3b77ba;
+  --c-red:        #da352e;
+  --c-orange:     #9d693c;
+
+  --accent-on: #ffffff;              /* 초록 위에 얹는 글자는 흰색이 맞다 */
+
+  --shadow:    none;
+  --shadow-md: 0 2px 8px rgb(16 18 21 / .10);
+  --shadow-lg: 0 16px 40px -12px rgb(16 18 21 / .22), 0 0 0 1px var(--line);
+}
+/* 사용자가 고른 적 없으면 시스템을 따른다. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --plane: #f5f6f8; --surface: #ffffff; --surface-2: #f0f2f5; --surface-3: #e4e8ed;
+    --ink: #16181b; --ink-2: #3f454d; --muted: #6b727c;
+    --line: #e5e8ec; --line-strong: #d3d8de; --line-hover: #b9c0c8;
+    --scrim: rgb(16 18 21 / .38);
+    --c-green: #368266; --c-green-soft: #2b8446; --c-coin: #956e00;
+    --c-blue: #3b77ba; --c-red: #da352e; --c-orange: #9d693c;
+    --accent-on: #ffffff;
+    --shadow-md: 0 2px 8px rgb(16 18 21 / .10);
+    --shadow-lg: 0 16px 40px -12px rgb(16 18 21 / .22), 0 0 0 1px var(--line);
+  }
+}
+
 /* 글꼴 — 세 화면(돈고래·문서고래·로그인)이 같은 글자를 쓰도록 공통 층에 둔다. */
 @font-face {
   font-family: "Pretendard Variable"; font-weight: 45 920; font-display: swap; font-style: normal;
@@ -371,7 +425,7 @@ a { color: var(--accent-ink); }
   background: var(--line-strong); border-radius: var(--r-full);
   border: 3px solid transparent; background-clip: padding-box;
 }
-::-webkit-scrollbar-thumb:hover { background: #43464e; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--line-hover); background-clip: padding-box; }
 ::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
 
 /* ── 셸 ── 사이드바 + 본문 ─────────────────────────────────────────────
@@ -872,7 +926,7 @@ button.refresh, .pill-reset, .pager button, button.add-watch {
   box-shadow: none;
 }
 button.refresh:hover, .pill-reset:hover, .pager button:hover:not(:disabled), button.add-watch:hover {
-  background: var(--surface-3); border-color: #414349; color: var(--ink);
+  background: var(--surface-3); border-color: var(--line-hover); color: var(--ink);
 }
 button.refresh:active, .pill-reset:active, .mini:active { transform: scale(.98); }
 button.refresh.primary {
@@ -884,7 +938,7 @@ button.refresh.primary:hover { background: var(--accent-ink); border-color: var(
   font-size: var(--fs-xs); font-weight: var(--w-med); padding: 3px 9px;
   border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--ink-2);
 }
-.mini:hover { background: var(--surface-3); border-color: #414349; color: var(--ink); }
+.mini:hover { background: var(--surface-3); border-color: var(--line-hover); color: var(--ink); }
 .mini.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-on); }
 button.add-watch { height: 28px; padding: 0 10px; font-size: var(--fs-xs); color: var(--accent-ink); }
 button.add-watch:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
@@ -892,7 +946,7 @@ button.add-watch:hover { background: var(--accent-soft); border-color: var(--acc
 /* 칩·토글 — 켜진 것만 색이 있다. */
 .chip { height: 28px; padding: 0 11px; border-radius: var(--r-full);
   background: transparent; border: 1px solid var(--line-strong); color: var(--muted); font-weight: var(--w-med); }
-.chip:hover { color: var(--ink-2); background: var(--surface-2); border-color: #414349; }
+.chip:hover { color: var(--ink-2); background: var(--surface-2); border-color: var(--line-hover); }
 .chip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-on); font-weight: var(--w-semi); }
 .seg { border-radius: var(--r-sm); border-color: var(--line-strong); overflow: hidden; }
 .seg button { height: 28px; border-radius: 0; background: var(--surface-2); color: var(--muted); font-weight: var(--w-med); }
@@ -1124,7 +1178,7 @@ tbody tr:hover > td { background: var(--surface-2); }
 .ms-opt, .ac-opt { border-radius: 4px; }
 .ms-opt:hover, .ac-opt:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
 .modal-hd { background: var(--surface-3); border-bottom-color: var(--line-strong); }
-.modal-back { background: rgb(0 0 0 / .62); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.modal-back { background: var(--scrim); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
 .busy, .toast {
   background: var(--surface-3); color: var(--ink); border: 1px solid var(--line-strong);
   border-radius: var(--r-sm); box-shadow: var(--shadow-lg); font-weight: var(--w-med);
@@ -1176,7 +1230,7 @@ tbody tr:hover > td { background: var(--surface-2); }
   /* '더보기' 시트 — 탭바에 안 들어간 항목들. 아래에서 올라온다. */
   .tabbar-more {
     display: block; position: fixed; inset: 0; z-index: 60;
-    background: rgb(0 0 0 / .62); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+    background: var(--scrim); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
     opacity: 0; pointer-events: none; transition: opacity .16s var(--ease);
   }
   .tabbar-more.open { opacity: 1; pointer-events: auto; }

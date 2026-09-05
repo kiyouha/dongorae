@@ -382,6 +382,32 @@ const today = () => new Date().toISOString().slice(0, 10);
 /* 필터 여닫이 — 화면마다 같은 규격으로 쓴다.
    폰에서는 접어 두고(필터 넷을 늘어놓으면 정작 목록이 안 보인다), 창이 넓어지면 편다.
    데스크톱에선 버튼이 CSS로 숨겨지고 .filter-body 가 display:contents 라 한 줄로 펼쳐진다. */
+/* 밝게/어둡게 — 고르면 기억하고, 안 골랐으면 시스템을 따른다.
+   차트 색은 그릴 때 CSS 변수를 읽으므로 테마를 바꾸면 다시 그려야 한다. */
+function currentTheme() {
+  const set = document.documentElement.dataset.theme;
+  if (set === "light" || set === "dark") return set;
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  try { localStorage.setItem("theme", t); } catch (e) { }
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", t === "light" ? "#f5f6f8" : "#08090a");
+  const btn = $("#themeBtn");
+  if (btn) { btn.textContent = t === "light" ? "☾" : "◐"; btn.title = t === "light" ? "어둡게" : "밝게"; }
+  redrawCharts();
+}
+/* 지금 화면에 떠 있는 차트를 다시 그린다(색을 CSS에서 읽어오므로). */
+function redrawCharts() {
+  const on = (id) => { const v = $("#view-" + id); return v && v.classList.contains("active"); };
+  if (on("dashboard")) { drawNav(); renderDivChart(); renderAllocations(); }
+  if (on("analysis")) { const sub = document.querySelector('#view-analysis .subtab.active');
+    if (sub && sub.dataset.sub === "dividend") loadDividendTab(); else renderAnalysis(); }
+  if (on("trade")) loadTrade();
+  if (MODAL_STOCK && MODAL_STOCK.ticker) loadStockChart();
+}
+
 function bindFilterToggle(btnSel, bodySel) {
   const btn = $(btnSel), body = $(bodySel);
   if (!btn || !body) return;
@@ -700,15 +726,18 @@ function renderDashboard() {
      도넛엔 항상 범례가 붙으니 그대로 두되, 색만으로 판단하게 만들지 말 것.
    · 여섯 개를 넘으면 색을 돌려 쓰지 않고 '기타'(중립 회색)로 접는다.
    · 색은 순위가 아니라 항목을 따라간다. 필터로 개수가 변해도 남은 것의 색이 안 바뀐다. */
-const ALLOC_COLORS = ["#6998cc", "#c69972", "#66bd9d", "#fbcb45", "#df645f", "#abe2bc"];
+/* 색은 CSS에서 읽는다 — 테마를 바꾸면 팔레트도 따라 바뀌어야 한다(라이트에서는 같은
+   색상의 어두운 값이 온다). 순서는 맞닿는 조각이 색상·밝기 둘 다 달라지게 짠 것. */
+const ALLOC_VARS = ["--c-blue", "--c-orange", "--c-green", "--c-coin", "--c-red", "--c-green-soft"];
+const allocPalette = () => ALLOC_VARS.map(v => cvVar(v));
 const ALLOC_OTHER = "#8a8f98";
-const ALLOC_MAX = ALLOC_COLORS.length;
+const ALLOC_MAX = ALLOC_VARS.length;
 const _allocSlots = {};
 function allocColor(group, label) {
   const m = _allocSlots[group] || (_allocSlots[group] = new Map());
   if (!m.has(label)) m.set(label, m.size);
   const i = m.get(label);
-  return i < ALLOC_MAX ? ALLOC_COLORS[i] : ALLOC_OTHER;
+  return i < ALLOC_MAX ? allocPalette()[i] : ALLOC_OTHER;
 }
 /* 캔버스는 color-mix를 못 읽는다 — 토큰 hex를 rgba로 바꿔 쓴다. */
 function rgba(hex, a) {
@@ -4078,6 +4107,18 @@ function onSubShow(viewId, sub) {   // 하위탭 최초 표시 시 지연 로드
 function initTabs() {
   /* 폰에서 필터 여닫기 — 화면마다 같은 규격으로 쓴다. 데스크톱에선 버튼이 안 보이고 필터는 늘 펼쳐져 있다.
      걸린 필터 개수를 버튼에 적어, 접어 둔 상태에서도 뭐가 걸렸는지 알 수 있게 한다. */
+  {
+    const btn = $("#themeBtn");
+    if (btn) {
+      applyTheme(currentTheme());
+      btn.addEventListener("click", () => applyTheme(currentTheme() === "light" ? "dark" : "light"));
+      /* 사용자가 고른 적 없을 때만 시스템 변화를 따라간다. */
+      window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => {
+        let saved = null; try { saved = localStorage.getItem("theme"); } catch (e) { }
+        if (!saved) applyTheme(currentTheme());
+      });
+    }
+  }
   bindFilterToggle("#mFilterBtn", "#mFilters");
   bindFilterToggle("#rFilterBtn", "#rFilters");
   {   // 접어 둔 채로도 뭐가 걸렸는지 보이게 버튼에 개수를 적는다
